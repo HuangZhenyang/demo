@@ -13,80 +13,92 @@ public class User {
     @GeneratedValue
     private Integer id;
 
-    private String userName; //用户名
+    private String name; //用户名
     private String password; //密码
     private String email; //邮箱
-    private String address; //地址
+    private String region; //地址
     private String gender; //性别
     private double balance; //余额
 
     public User() {
     }
 
-    public User(String userName, String password, String email,String address,String gender,double balance) {
-        this.userName = userName;
+    public User(String name, String password, String email,String region,String gender,double balance) {
+        this.name = name;
         this.password = password;
         this.email = email;
-        this.address = address;
+        this.region = region;
         this.gender = gender;
         this.balance = balance;
     }
 
-    // Getter
+    //getter and setter
     public Integer getId() {
         return id;
     }
 
-    public String getUserName() {
-        return userName;
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getPassword() {
         return password;
     }
 
-    public String getEmail() {
-        return email;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public double getBalance(){
-        return balance;
-    }
-
-    // Setter
-    public void setId(Integer id) {
-        this.id = id;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getEmail() {
+        return email;
     }
 
     public void setEmail(String email) {
         this.email = email;
     }
 
-    public void setAddress(String address) {
-        this.address = address;
+    public String getRegion() {
+        return region;
+    }
+
+    public void setRegion(String region) {
+        this.region = region;
+    }
+
+    public String getGender() {
+        return gender;
     }
 
     public void setGender(String gender) {
         this.gender = gender;
     }
 
-    public void setBalance(double balance){
+    public double getBalance() {
+        return balance;
+    }
+
+    public void setBalance(double balance) {
         this.balance = balance;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", name='" + name + '\'' +
+                ", password='" + password + '\'' +
+                ", email='" + email + '\'' +
+                ", region='" + region + '\'' +
+                ", gender='" + gender + '\'' +
+                ", balance=" + balance +
+                '}';
     }
 }
