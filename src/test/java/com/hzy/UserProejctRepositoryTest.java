@@ -1,3 +1,4 @@
+/*
 package com.hzy;
 
 import com.hzy.Model.UserProject;
@@ -16,9 +17,11 @@ import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 import java.util.List;
 
+*/
 /**
  * Created by huangzhenyang on 2017/9/8.
- */
+ *//*
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class UserProejctRepositoryTest {
@@ -71,3 +74,4 @@ public class UserProejctRepositoryTest {
         System.out.println(userProject.toString());
     }
 }
+*/

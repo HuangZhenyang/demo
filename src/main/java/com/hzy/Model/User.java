@@ -6,6 +6,7 @@ import javax.persistence.Id;
 
 /**
  * Created by huangzhenyang on 2017/8/4.
+ *
  */
 @Entity
 public class User {
@@ -18,7 +19,8 @@ public class User {
     private String email; //邮箱
     private String region; //地址
     private String gender; //性别
-    private double balance; //余额
+    private double balance; //余额， 爱心值
+    
 
     public User() {
     }

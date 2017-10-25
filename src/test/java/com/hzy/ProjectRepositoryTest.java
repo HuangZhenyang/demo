@@ -1,3 +1,4 @@
+/*
 package com.hzy;
 
 import com.hzy.Model.Project;
@@ -12,10 +13,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.context.junit4.SpringRunner;
 
+*/
 /**
  * Created by huangzhenyang on 2017/9/8.
  * ProjectRepositoryTest
- */
+ *//*
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class ProjectRepositoryTest {
@@ -39,3 +42,4 @@ public class ProjectRepositoryTest {
         System.out.println(projectPage.getContent().get(0).getImgUrl());
     }
 }
+*/

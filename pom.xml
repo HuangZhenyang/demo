@@ -70,6 +70,12 @@
 			<artifactId>json</artifactId>
 			<version>20160810</version>
 		</dependency>
+		<!--ok http-->
+		<dependency>
+			<groupId>com.squareup.okhttp</groupId>
+			<artifactId>okhttp</artifactId>
+			<version>2.7.5</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -80,6 +86,15 @@
 				<!--hot-->
 				<configuration>
 					<fork>true</fork>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.18.1</version>
+				<configuration>
+					<skipTests>true</skipTests>
 				</configuration>
 			</plugin>
 		</plugins>

@@ -1,0 +1,6 @@
+1. http://localhost:8081/img/news/001.jpg  直接这样就可以访问图片的静态资源
+2. service层是一些更新啊删除操作这种需要有@Transactional注解的操作
+   repository层是查
+   就像UserRepository和UserService一样
+3. 图片在数据库中的存储：存储图片的路径就行
+4. 用户在布萌注册成功以后，会返回一个bubi_id即"bubi_address":"bubiV8i7c3fM7MPFfjZsP4h1zGLUEix4gXUnX8Ft"

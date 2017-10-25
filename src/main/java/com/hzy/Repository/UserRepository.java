@@ -10,6 +10,7 @@ import javax.transaction.Transactional;
 
 /**
  * Created by huangzhenyang on 2017/8/4.
+ *
  */
 
 public interface UserRepository extends JpaRepository<User,Integer>{

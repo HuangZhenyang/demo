@@ -1,3 +1,4 @@
+/*
 package com.hzy;
 
 import com.hzy.Model.News;
@@ -10,9 +11,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
 
+*/
 /**
  * Created by huangzhenyang on 2017/9/7.
- */
+ *//*
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class NewsRepositoryTest {
@@ -30,3 +33,4 @@ public class NewsRepositoryTest {
         }
     }
 }
+*/
