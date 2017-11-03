@@ -4,3 +4,6 @@
    就像UserRepository和UserService一样
 3. 图片在数据库中的存储：存储图片的路径就行
 4. 用户在布萌注册成功以后，会返回一个bubi_id即"bubi_address":"bubiV8i7c3fM7MPFfjZsP4h1zGLUEix4gXUnX8Ft"
+5. 我在文本里加个标签<img>5</img>这样子，你前端得到了以后只要解析一下标签里的数字，再加到那个url里面就行了
+6. 前端发布项目时传图片， 先传文字，然后
+7. 设置图片上传后的路径：http://blog.csdn.net/qq1115094858/article/details/51873698

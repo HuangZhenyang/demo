@@ -16,6 +16,6 @@ public class TestController {
 
     /*@GetMapping("/getimg")  不能直接返回静态资源
     public String getImg(){
-        return "img/news/001.jpg";
+        return "img/news/1.jpg";
     }*/
 }

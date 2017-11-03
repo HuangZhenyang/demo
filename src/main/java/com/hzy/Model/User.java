@@ -20,7 +20,7 @@ public class User {
     private String region; //地址
     private String gender; //性别
     private double balance; //余额， 爱心值
-    
+    private Integer head; // 头像的id
 
     public User() {
     }
@@ -89,6 +89,14 @@ public class User {
 
     public void setBalance(double balance) {
         this.balance = balance;
+    }
+
+    public Integer getHead() {
+        return head;
+    }
+
+    public void setHead(Integer head) {
+        this.head = head;
     }
 
     @Override

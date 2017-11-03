@@ -6,6 +6,7 @@ import javax.persistence.Id;
 
 /**
  * Created by huangzhenyang on 2017/9/7.
+ *
  */
 @Entity
 public class News {
@@ -14,20 +15,18 @@ public class News {
     private Integer id;
 
     private String title; // 新闻标题
-    private String imgUrl; // 首页显示的图片的链接
+    private Integer img; // 首页显示的图片的链接
     private String newsDetail; // 新闻内容
 
     //构造器
     public News() {
     }
 
-    public News(String title, String imgUrl, String newsDetail) {
+    public News(String title, Integer img, String newsDetail) {
         this.title = title;
-        this.imgUrl = imgUrl;
+        this.img = img;
         this.newsDetail = newsDetail;
     }
-
-    //setter and getter
 
     public Integer getId() {
         return id;
@@ -45,12 +44,12 @@ public class News {
         this.title = title;
     }
 
-    public String getImgUrl() {
-        return imgUrl;
+    public Integer getImg() {
+        return img;
     }
 
-    public void setImgUrl(String imgUrl) {
-        this.imgUrl = imgUrl;
+    public void setImg(Integer img) {
+        this.img = img;
     }
 
     public String getNewsDetail() {
@@ -61,13 +60,12 @@ public class News {
         this.newsDetail = newsDetail;
     }
 
-    // to string
     @Override
     public String toString() {
         return "News{" +
                 "id=" + id +
                 ", title='" + title + '\'' +
-                ", imgUrl='" + imgUrl + '\'' +
+                ", img=" + img +
                 ", newsDetail='" + newsDetail + '\'' +
                 '}';
     }

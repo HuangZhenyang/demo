@@ -19,11 +19,14 @@ public interface UserRepository extends JpaRepository<User,Integer>{
     @Query("select u from User u where u.email=?1")
     User findByEmail(String email);
 
+    //根据id返回用户
+    @Query("select u from User u where u.id=?1")
+    User findById(Integer id);
 
     //修改密码
     @Modifying
     @Query("update User u set u.password=:password")
     Boolean updatePassword(@Param("password") String password);
 
-    //
+
 }

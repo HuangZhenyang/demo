@@ -6,6 +6,7 @@ import javax.persistence.Id;
 
 /**
  * Created by huangzhenyang on 2017/9/7.
+ * 项目
  */
 @Entity
 public class Project {
@@ -15,7 +16,7 @@ public class Project {
 
     private String projectName; // 项目名称
     private String initiatorName; // 发起方名称
-    private String imgUrl; // 首页的图片链接
+    private Integer img; // 首页的图片链接
     private String description; // 简短的描述
     private double targetMoney; // 目标筹款金额
     private double currentMoney; // 当前已筹款的金额
@@ -25,10 +26,10 @@ public class Project {
     public Project() {
     }
 
-    public Project(String projectName, String initiatorName, String imgUrl, String description, double targetMoney, double currentMoney, String detail) {
+    public Project(String projectName, String initiatorName, Integer img, String description, double targetMoney, double currentMoney, String detail) {
         this.projectName = projectName;
         this.initiatorName = initiatorName;
-        this.imgUrl = imgUrl;
+        this.img = img;
         this.description = description;
         this.targetMoney = targetMoney;
         this.currentMoney = currentMoney;
@@ -60,12 +61,12 @@ public class Project {
         this.initiatorName = initiatorName;
     }
 
-    public String getImgUrl() {
-        return imgUrl;
+    public Integer getImg() {
+        return img;
     }
 
-    public void setImgUrl(String imgUrl) {
-        this.imgUrl = imgUrl;
+    public void setImg(Integer img) {
+        this.img = img;
     }
 
     public String getDescription() {
