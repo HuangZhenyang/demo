@@ -3,7 +3,6 @@ package com.hzy.util;
 import com.hzy.Model.Token;
 import com.hzy.Repository.TokenRepository;
 import com.hzy.Service.TokenService;
-import com.hzy.util.MD5Util;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

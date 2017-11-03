@@ -22,6 +22,7 @@ public class User {
     private double balance; //余额， 爱心值
     private Integer head; // 头像的id
 
+
     public User() {
     }
 

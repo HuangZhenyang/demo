@@ -16,18 +16,18 @@ public class Plan {
 
     private Integer userId; // 用户的id
     private String planName; // 习惯的名字
-    private Integer finishedTimes; // 已经打卡的次数
-    private Integer value; // 爱心值
-    private String startDate; // 开始的那天的日期
-    private String deadline; // 结束的那天的日期
-    private String lastClock; // 最后一次打卡的日期，格式为2017-10-26
+    private Integer finishedTimes; // 已经打卡的次数     打卡需要改变
+    private Integer value; // 爱心值     打卡需要改变
+    private String startDate; // 开始的那天的日期  2017-11-2
+    private String deadline; // 结束的那天的日期  22017-11-23
+    private String lastClock; // 最后一次打卡的日期，格式为2017-10-26       打卡需要改变
     private String stillKeeping; // 习惯是否还在坚持的布尔变量，判断该次签到的日期与最后一次打卡的日期是否差了一天，
                                     // 是的话为true并且finishedTimes+1,否则为false; 前端判断为false以后就设置打卡按钮不可点击
+                                    // "over"则表示该习惯已经完成
+                                    // 打卡可能需要改变
 
 
-    // 构造器
-    public Plan(){
-
+    public Plan() {
     }
 
     public Plan(Integer userId, String planName, Integer finishedTimes, Integer value, String startDate, String deadline, String lastClock, String stillKeeping) {
@@ -109,8 +109,8 @@ public class Plan {
         return stillKeeping;
     }
 
-    public void setStillKeeping(Boolean stillKeeping) {
-        stillKeeping = stillKeeping;
+    public void setStillKeeping(String stillKeeping) {
+        this.stillKeeping = stillKeeping;
     }
 
     @Override
@@ -119,12 +119,12 @@ public class Plan {
                 "id=" + id +
                 ", userId=" + userId +
                 ", planName='" + planName + '\'' +
-                ", finishedTimes='" + finishedTimes + '\'' +
-                ", value='" + value + '\'' +
+                ", finishedTimes=" + finishedTimes +
+                ", value=" + value +
                 ", startDate='" + startDate + '\'' +
                 ", deadline='" + deadline + '\'' +
                 ", lastClock='" + lastClock + '\'' +
-                ", isStillKeeping=" + stillKeeping +
+                ", stillKeeping='" + stillKeeping + '\'' +
                 '}';
     }
 }

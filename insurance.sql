@@ -81,21 +81,30 @@ CREATE TABLE token (
   PRIMARY KEY (id)
 );
 
+CREATE TABLE user_plan (
+  id                    INT(20) AUTO_INCREMENT,
+  userId                INT(20),
+  planNumber            INT(20),
+  PRIMARY KEY (id)
+);
 
+
+
+# user
 INSERT INTO user (name, password, email, region, gender, balance, head)
   VALUES ("user1","123456","745125931@qq.com","厦门","man","100",1);
 
 INSERT INTO user (name, password, email, region, gender, balance, head)
   VALUES ("user2","123456","6677888@qq.com","漳州","woman","50", 2);
 
-
+# project
 INSERT INTO project(project_name, initiator_name, img, description, target_money,current_money,detail)
   VALUES ("projectname1","initiatorName1",1,"项目测试描述1","10000","501","project1 detail test");
 
 INSERT INTO project(project_name, initiator_name, img, description, target_money,current_money,detail)
   VALUES ("projectname2","initiatorName2",2,"项目测试描述2","3000","502","project2 detail test");
 
-
+#  news
 INSERT INTO news (title,img,news_detail)
   VALUES ("test1",1,"This is a test1 detail.");
 
@@ -108,7 +117,7 @@ INSERT INTO news (title, img, news_detail)
 INSERT INTO news (title, img, news_detail)
   VALUES ("test4",4,"This is a test4 detail.");
 
-
+# user_project
 INSERT INTO user_project (user_id, project_id, timestamp, donate_money)
   VALUES (1,1,"2017-09-08",1200);
 
@@ -121,10 +130,16 @@ INSERT INTO user_project (user_id, project_id, timestamp, donate_money)
 INSERT INTO user_project (user_id, project_id, timestamp, donate_money)
   VALUES (2,2,"2016-10-08",700);
 
+# plan
+INSERT INTO plan (id, user_id, plan_name, finished_times, value, start_date, deadline, last_clock, still_keeping)
+    VALUES (1,1,"学英语",5,6,"2017-11-1","2017-11-23","2017-11-1","true");
 
 INSERT INTO plan (id, user_id, plan_name, finished_times, value, start_date, deadline, last_clock, still_keeping)
-    VALUES (1,1,"学英语",5,6,"2017-11-1","2017-11-23","2017-11-1","alive");
+    VALUES (2,2,"学英语化学物理",3,6,"2017-11-1","2017-11-23","2017-11-1","true");
 
-INSERT INTO plan (id, user_id, plan_name, finished_times, value, start_date, deadline, last_clock, still_keeping)
-    VALUES (2,2,"学英语化学物理",3,6,"2017-11-1","2017-11-23","2017-11-1","alive");
+# user_plan
+INSERT INTO user_plan(id, user_id, plan_number)
+    VALUES (1, 1, 1);
 
+INSERT INTO user_plan(id, user_id, plan_number)
+VALUES (2, 2, 1);

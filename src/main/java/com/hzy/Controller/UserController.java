@@ -14,6 +14,9 @@ import javax.servlet.http.HttpServletRequest;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -42,7 +45,14 @@ public class UserController {
     @Autowired
     private TokenRepository tokenRepository;
 
+    @Autowired
+    private UserPlanRepository userPlanRepository;
+
     private TokenUtil tokenUtil = new TokenUtil();
+
+    private static SimpleDateFormat df =
+            new SimpleDateFormat("yyyy-MM-dd");//设置日期格式
+
 
     //用户注册
     @PostMapping("/user/register")
@@ -231,22 +241,83 @@ public class UserController {
      * @return String 返回打卡结果
      */
     @PostMapping("/user/clock")
-    public String clock(@RequestParam("token") String tokenStr, @RequestParam("token") Integer planId) {
+    public String clock(@RequestParam("token") String tokenStr, @RequestParam("planId") Integer planId) {
         if (tokenStr == null) {
             return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
         } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
             return "{\"ok\":\"false\", \"reason\":\"您的Token已过期,请重新登录\"}";
         }
 
-        Plan plan = planRepository.findById(planId);
+        Integer userId = tokenUtil.getUserId(tokenStr);
 
 
-        return "";
+        // 前端判断为false以后就设置打卡按钮不可点击
+        // 首先检查今天打卡的日期与最后一次打卡日期是不是差了一天，是的话进行下一步，
+        // 否则返回打卡失败并把stillKeeping置为"false",更新数据库
+        // finishedTimes += 1，lastClock = 今天，
+        // 然后看今天是否已经是截止日期，是的话则该习惯已经完成，stillKeeping置为over, 更新user拥有的plan数量
+        // 否则的话stillKeeping仍然为"true"
+        Plan plan = planRepository.findById(planId); // 根据plan的id获取plan对象
+        Date deadlineDate; // 截止的日期
+        Date currDate; // 当前日期
+        String currDateStr;
+        Date lastClockDate; // 最后一次打卡日期
+        int dueTime = 86400000;
+        int heartValuePerClock = 5; // 每次打卡获得的爱心值
+
+        try {
+            deadlineDate = df.parse(plan.getDeadline());
+            currDate= df.parse(df.format(new Date()));
+            lastClockDate = df.parse(plan.getLastClock());
+            currDateStr = df.format(currDate);
+
+            if(plan.getLastClock() == null){ // // 如果为空，说明是第一次打卡
+                plan.setLastClock(currDateStr);
+                plan.setValue(plan.getValue() + heartValuePerClock);
+                plan.setFinishedTimes(plan.getFinishedTimes() + 1);
+                planRepository.save(plan);   // TODO:测试这里会不会覆盖原有的，还是新创建了   PASS:会覆盖原有的（相当于更新了）
+                return "{\"ok\":\"true\", \"reason\":\"第一天打卡完成\"}";
+
+            }else {
+                if(currDate.getTime() - lastClockDate.getTime() == dueTime){ // 是否与上次打卡只差了一天
+                    plan.setLastClock(currDateStr);
+                    plan.setFinishedTimes(plan.getFinishedTimes() + 1);
+                    plan.setValue(plan.getValue() + heartValuePerClock);
+                    if(currDate.getTime() == deadlineDate.getTime()){ // 今天是否已经是截止日期
+                        String stillKeepingPara = "over";
+                        plan.setStillKeeping(stillKeepingPara);
+                        //planRepository.save(plan);
+                        UserPlan userPlan = userPlanRepository.findByUserId(userId);
+                        Integer newPlanNumber = userPlan.getPlanNumber() + 1;
+                        userPlan.setPlanNumber(newPlanNumber);
+                        userPlanRepository.save(userPlan);
+                    }else{
+                        planRepository.save(plan);
+                    }
+
+                    return "{\"ok\":\"true\", \"reason\":\"目标达成\"}";
+                } else if(currDate.getTime() - lastClockDate.getTime() > dueTime){
+                    String stillKeepingPara = "false";
+                    plan.setStillKeeping(stillKeepingPara);
+                    planRepository.save(plan);
+                    return "{\"ok\":\"false\", \"reason\":\"您距离上一次打卡已经超过一天\"}";
+                }else if(currDate.getTime() - lastClockDate.getTime() == 0){ // 如果是最后一次打卡就是今天，则返回打卡失败
+                    return "{\"ok\":\"false\", \"reason\":\"您今天已经打卡完毕，明天再来吧\"}";
+                }
+            }
+
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        return "{\"ok\":\"true\"}";
     }
 
 
     /**
      * 添加习惯
+     * @param tokenStr token
+     * @return String 返回添加成功与否
      */
     @PostMapping("/user/add-plan")
     public String addPlan(@RequestParam("token") String tokenStr) {
