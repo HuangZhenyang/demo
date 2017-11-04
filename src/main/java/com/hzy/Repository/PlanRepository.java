@@ -18,4 +18,8 @@ public interface PlanRepository extends JpaRepository<Plan,Integer> {
     //根据planid返回
     @Query("select p from Plan p where p.id=?1")
     Plan findById(Integer id);
+
+    //根据用户id和stillKeeping为"true"返回
+    @Query("select p from Plan p where p.userId=?1 and p.stillKeeping=?2")
+    List<Plan> findByUserIdAndStillKeeping(Integer userId, String stillKeeping);
 }

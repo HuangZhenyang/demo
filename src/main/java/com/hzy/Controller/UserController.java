@@ -16,6 +16,7 @@ import org.json.JSONObject;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -97,14 +98,14 @@ public class UserController {
         }
 
         Token token = tokenUtil.getToken(user.getId());
-        String tokenStr ;
-        if(token == null){
+        String tokenStr;
+        if (token == null) {
             tokenStr = tokenUtil.createToken(user.getId());
             //tokenRepository.save(new Token(user.getId(), tokenStr, "alive"));
             tokenUtil.saveToken(new Token(user.getId(), tokenStr, "alive"));
-        }else if(!tokenUtil.checkToken(token.getTokenStr())){ // false表示已过期，则更新token
+        } else if (!tokenUtil.checkToken(token.getTokenStr())) { // false表示已过期，则更新token
             tokenStr = tokenUtil.updateToken(token.getId(), user.getId());
-        }else{
+        } else {
             tokenStr = token.getTokenStr();
         }
 
@@ -143,9 +144,9 @@ public class UserController {
         userJsonObject.put("region", user.getRegion());
         userJsonObject.put("gender", user.getGender());
         userJsonObject.put("balance", user.getBalance());
-        userJsonObject.put("head", "/img/head/"+user.getHead()+".jpg");
+        userJsonObject.put("head", "/img/head/" + user.getHead() + ".jpg");
 
-        resultJsonObject.put("user",userJsonObject);
+        resultJsonObject.put("user", userJsonObject);
 
         //取出news  TEST PASS
         List<News> newsList = newsRepository.findTop3ByOrderByIdDesc();
@@ -186,10 +187,9 @@ public class UserController {
 
     /**
      * 发布项目
-     *
-     * */
+     */
     @PostMapping("/user/publish-project")
-    public String publishProject(){
+    public String publishProject() {
         return "";
     }
 
@@ -236,6 +236,7 @@ public class UserController {
     /**
      * 打卡
      * 修改数据库里的数据
+     *
      * @param tokenStr token 串（加密过的）
      * @param planId   要打卡的习惯的id
      * @return String 返回打卡结果
@@ -267,23 +268,23 @@ public class UserController {
 
         try {
             deadlineDate = df.parse(plan.getDeadline());
-            currDate= df.parse(df.format(new Date()));
+            currDate = df.parse(df.format(new Date()));
             lastClockDate = df.parse(plan.getLastClock());
             currDateStr = df.format(currDate);
 
-            if(plan.getLastClock() == null){ // // 如果为空，说明是第一次打卡
+            if (plan.getLastClock() == null) { // // 如果为空，说明是第一次打卡
                 plan.setLastClock(currDateStr);
                 plan.setValue(plan.getValue() + heartValuePerClock);
                 plan.setFinishedTimes(plan.getFinishedTimes() + 1);
                 planRepository.save(plan);   // TODO:测试这里会不会覆盖原有的，还是新创建了   PASS:会覆盖原有的（相当于更新了）
                 return "{\"ok\":\"true\", \"reason\":\"第一天打卡完成\"}";
 
-            }else {
-                if(currDate.getTime() - lastClockDate.getTime() == dueTime){ // 是否与上次打卡只差了一天
+            } else {
+                if (currDate.getTime() - lastClockDate.getTime() == dueTime) { // 是否与上次打卡只差了一天
                     plan.setLastClock(currDateStr);
                     plan.setFinishedTimes(plan.getFinishedTimes() + 1);
                     plan.setValue(plan.getValue() + heartValuePerClock);
-                    if(currDate.getTime() == deadlineDate.getTime()){ // 今天是否已经是截止日期
+                    if (currDate.getTime() == deadlineDate.getTime()) { // 今天是否已经是截止日期
                         String stillKeepingPara = "over";
                         plan.setStillKeeping(stillKeepingPara);
                         //planRepository.save(plan);
@@ -291,17 +292,17 @@ public class UserController {
                         Integer newPlanNumber = userPlan.getPlanNumber() + 1;
                         userPlan.setPlanNumber(newPlanNumber);
                         userPlanRepository.save(userPlan);
-                    }else{
+                    } else {
                         planRepository.save(plan);
                     }
 
                     return "{\"ok\":\"true\", \"reason\":\"目标达成\"}";
-                } else if(currDate.getTime() - lastClockDate.getTime() > dueTime){
+                } else if (currDate.getTime() - lastClockDate.getTime() > dueTime) {
                     String stillKeepingPara = "false";
                     plan.setStillKeeping(stillKeepingPara);
                     planRepository.save(plan);
                     return "{\"ok\":\"false\", \"reason\":\"您距离上一次打卡已经超过一天\"}";
-                }else if(currDate.getTime() - lastClockDate.getTime() == 0){ // 如果是最后一次打卡就是今天，则返回打卡失败
+                } else if (currDate.getTime() - lastClockDate.getTime() == 0) { // 如果是最后一次打卡就是今天，则返回打卡失败
                     return "{\"ok\":\"false\", \"reason\":\"您今天已经打卡完毕，明天再来吧\"}";
                 }
             }
@@ -316,12 +317,61 @@ public class UserController {
 
     /**
      * 添加习惯
+     *
      * @param tokenStr token
      * @return String 返回添加成功与否
      */
     @PostMapping("/user/add-plan")
-    public String addPlan(@RequestParam("token") String tokenStr) {
-        return  "";
+    public String addPlan(@RequestParam("token") String tokenStr,
+                          @RequestParam("planName") String planNamePara) {
+        // 找出UserPlan中当前用户的plan number有多少个
+        // 找出当前该用户一共有多少个 状态为"true"的plan, 并与上面的对比看是否小于最大的习惯数量
+        // 小的话则添加该习惯，否则返回添加失败
+        if (tokenStr == null) {
+            return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
+        } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
+            return "{\"ok\":\"false\", \"reason\":\"您的Token已过期,请重新登录\"}";
+        }
+
+        Integer userId = tokenUtil.getUserId(tokenStr); // 用户ID
+        UserPlan userPlan = userPlanRepository.findByUserId(userId); // 获取用户与plan的数量关系
+        Integer userPlanNumber = userPlan.getPlanNumber();// 获取用户能
+        String stillKeepingStr = "true";
+        List<Plan> planList = planRepository.findByUserIdAndStillKeeping(userId, stillKeepingStr); // 获取当前用户仍在坚持的习惯列表
+
+        String newPlanName = planNamePara;
+
+        if (planList.size() < userPlanNumber) { // 如果当前用户的习惯数量小于他习惯数量最大值，则添加习惯
+            Plan newPlan = new Plan();
+
+            // 开始日期
+            String startDateStr = df.format(new Date());
+            // 截止日期
+            Calendar calendar = Calendar.getInstance();
+            int addDays = 21; // 需要增加的天数
+            calendar.add(Calendar.DATE, addDays);// num为增加的天数
+            Date deadlineDate = calendar.getTime();
+            String deadlineDateStr = df.format(deadlineDate);
+            // 是否仍在坚持
+            String stillKeepingPara = "true";
+
+            // 设置字段的值
+            newPlan.setUserId(userId);
+            newPlan.setPlanName(newPlanName);
+            newPlan.setFinishedTimes(0);
+            newPlan.setValue(0);
+            newPlan.setStartDate(startDateStr);
+            newPlan.setDeadline(deadlineDateStr);
+            newPlan.setLastClock(startDateStr);
+            newPlan.setStillKeeping(stillKeepingPara);
+
+            planRepository.save(newPlan);
+
+            return "{\"ok\":\"true\"}";
+
+        } else { // 否则，返回false
+            return "{\"ok\":\"false\", \"reason\":\"您当前的习惯数量已达上限\"}";
+        }
     }
 
 
