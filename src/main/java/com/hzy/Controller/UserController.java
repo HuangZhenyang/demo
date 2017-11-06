@@ -13,7 +13,9 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -184,12 +186,28 @@ public class UserController {
 //        }
     }
 
+    /**
+     * TODO:上传project news的图片
+     *
+     * */
+
 
     /**
-     * 发布项目
+     * TODO:上传project detail的图片
+     *
+     * */
+
+    /**
+     * 用户先上传图片，保存了以后服务端返回图片id,前端把id嵌进detail  <img>1</img> , 再发起post请求
+     * TODO:发布项目
      */
     @PostMapping("/user/publish-project")
-    public String publishProject() {
+    public String publishProject(@RequestParam("token") String tokenStr,
+                                 @RequestParam("projectName") String projectNamePara,
+                                 @RequestParam("initiatorName") String initiatorNamePara,
+                                 @RequestParam("description") String descriptionPara,
+                                 @RequestParam("targetMoney") double targetMoney,
+                                 @RequestParam("detail") String detailPara) {
         return "";
     }
 
@@ -375,5 +393,61 @@ public class UserController {
     }
 
 
-    //捐款
+    // TODO:捐款
+    /**
+     * 捐款
+     *
+     * */
+
+
+
+    /**
+    * 测试图片上传
+    *
+    * */
+    @PostMapping("/user/pic-upload-test")
+    public String picUpload(@RequestParam("name") String picName,
+                            @RequestParam("pic") MultipartFile multipartFilePara){
+        MultipartFile multipartFile = multipartFilePara;
+        if(!multipartFile.isEmpty()){
+            try{
+                // D:\\p\\demo\\src\\main\\resources\\static\\img\\test\\
+                // C:\\project\\insurance\\img\\test\\
+                String filePath = "\\img\\test\\";
+                BufferedOutputStream out = new BufferedOutputStream(
+                        new FileOutputStream(new File(filePath + picName + ".jpg")));//保存图片到目录下
+                out.write(multipartFile.getBytes());
+                out.flush();
+                out.close();
+
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                return "{\"ok\":\"false\"}";
+            } catch (IOException e) {
+                e.printStackTrace();
+                return "{\"ok\":\"false\"}";
+            }
+        }
+
+
+        return "{\"ok\":\"true\"}";
+    }
+
+
+
+
+
+
+
 }
+
+
+
+
+
+
+
+
+
+
