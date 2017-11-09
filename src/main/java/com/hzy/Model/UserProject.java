@@ -8,7 +8,7 @@ import java.io.Serializable;
 
 /**
  * Created by huangzhenyang on 2017/9/7.
- *
+ * 用户与捐赠的项目之间的关系
  */
 @Entity
 @Table(name = "user_project")

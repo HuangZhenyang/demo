@@ -19,20 +19,23 @@ public class User {
     private String email; //邮箱
     private String region; //地址
     private String gender; //性别
-    private double balance; //余额， 爱心值
+    private double balance; //余额
+    private double value; // 爱心值
     private Integer head; // 头像的id
 
 
     public User() {
     }
 
-    public User(String name, String password, String email,String region,String gender,double balance) {
+    public User(String name, String password, String email, String region, String gender, double balance, double value, Integer head) {
         this.name = name;
         this.password = password;
         this.email = email;
         this.region = region;
         this.gender = gender;
         this.balance = balance;
+        this.value = value;
+        this.head = head;
     }
 
     //getter and setter
@@ -90,6 +93,14 @@ public class User {
 
     public void setBalance(double balance) {
         this.balance = balance;
+    }
+
+    public double getValue() {
+        return value;
+    }
+
+    public void setValue(double value) {
+        this.value = value;
     }
 
     public Integer getHead() {

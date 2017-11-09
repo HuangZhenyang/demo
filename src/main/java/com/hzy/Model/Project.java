@@ -21,12 +21,14 @@ public class Project {
     private double targetMoney; // 目标筹款金额
     private double currentMoney; // 当前已筹款的金额
     private String detail; // 项目详情
+    private String imgListStr; // 项目所有图片的id组成的字符串  1_2_3
+    private Integer userId; // 发起的用户id
 
     // 构造器
     public Project() {
     }
 
-    public Project(String projectName, String initiatorName, Integer img, String description, double targetMoney, double currentMoney, String detail) {
+    public Project(String projectName, String initiatorName, Integer img, String description, double targetMoney, double currentMoney, String detail, String imgListStr, Integer userId) {
         this.projectName = projectName;
         this.initiatorName = initiatorName;
         this.img = img;
@@ -34,6 +36,8 @@ public class Project {
         this.targetMoney = targetMoney;
         this.currentMoney = currentMoney;
         this.detail = detail;
+        this.imgListStr = imgListStr;
+        this.userId = userId;
     }
 
     //getter and setter
@@ -101,19 +105,19 @@ public class Project {
         this.detail = detail;
     }
 
-    //to string
+    public String getImgListStr() {
+        return imgListStr;
+    }
 
-   /* @Override
-    public String toString() {
-        return "Project{" +
-                "id=" + id +
-                ", projectName='" + projectName + '\'' +
-                ", initiatorName='" + initiatorName + '\'' +
-                ", imgUrl='" + imgUrl + '\'' +
-                ", description='" + description + '\'' +
-                ", targetMoney='" + targetMoney + '\'' +
-                ", currentMoney='" + currentMoney + '\'' +
-                ", detail='" + detail + '\'' +
-                '}';
-    }*/
+    public void setImgListStr(String imgListStr) {
+        this.imgListStr = imgListStr;
+    }
+
+    public Integer getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Integer userId) {
+        this.userId = userId;
+    }
 }

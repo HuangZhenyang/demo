@@ -4,6 +4,7 @@ import com.hzy.Model.*;
 import com.hzy.Repository.*;
 import com.hzy.Service.ProjectService;
 import com.hzy.Service.UserProjectService;
+import com.hzy.util.FileUtil;
 import com.hzy.util.TokenUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -35,6 +36,9 @@ public class UserController {
 
     @Autowired
     private NewsRepository newsRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
 
     @Autowired
     private ProjectService projectService;
@@ -175,6 +179,8 @@ public class UserController {
             projectsJsonObject.put("targetMoney", project.getTargetMoney());
             projectsJsonObject.put("currentMoney", project.getCurrentMoney());
             projectsJsonObject.put("detail", project.getDetail());
+            projectsJsonObject.put("imgListStr", project.getImgListStr());
+            projectsJsonObject.put("userId", project.getUserId());
             //获取已经捐赠的人数
             projectsJsonObject.put("peopleNumber", "" + userProjectService.getNumberByProjectId(project.getId()));
 
@@ -193,23 +199,118 @@ public class UserController {
 
 
     /**
-     * TODO:上传project detail的图片
+     * 客户端先上传项目的信息，服务端返回该新项目的id, 客户端传图片的时候带着项目id
+     *  爱心值达到200才能发布项目
      *
-     * */
-
-    /**
-     * 用户先上传图片，保存了以后服务端返回图片id,前端把id嵌进detail  <img>1</img> , 再发起post请求
-     * TODO:发布项目
+     *  @param tokenStr token
+     *  @param projectNamePara 项目名称
+     *  @param initiatorNamePara 发起方的名字（如果是用户就是用户名）
+     *  @param descriptionPara 项目的简短的一句话描述
+     *  @param targetMoneyPara 目标筹款金额
+     *  @param detailPara  项目的具体详情描述（仅包含文字）
      */
     @PostMapping("/user/publish-project")
     public String publishProject(@RequestParam("token") String tokenStr,
                                  @RequestParam("projectName") String projectNamePara,
                                  @RequestParam("initiatorName") String initiatorNamePara,
                                  @RequestParam("description") String descriptionPara,
-                                 @RequestParam("targetMoney") double targetMoney,
+                                 @RequestParam("targetMoney") double targetMoneyPara,
                                  @RequestParam("detail") String detailPara) {
-        return "";
+
+        if (tokenStr == null) {
+            return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
+        } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
+            return "{\"ok\":\"false\", \"reason\":\"您的Token已过期,请重新登录\"}";
+        }
+        // 创建对象
+        User user = userRepository.findById(tokenUtil.getUserId(tokenStr));
+        // 判断用户爱心值是否超过200
+        if(user.getValue() < 200){
+            return "{\"ok\":\"false\", \"reason\":\"您的爱心值不够哦\"}";
+        }
+
+        Project tempProject = new Project();
+        // 插入数据
+        tempProject.setProjectName(projectNamePara);
+        tempProject.setInitiatorName(initiatorNamePara);
+        tempProject.setDescription(descriptionPara);
+        tempProject.setTargetMoney(targetMoneyPara);
+        tempProject.setDetail(detailPara);
+        tempProject.setUserId(user.getId());
+        //保存
+        Project newProject = projectRepository.save(tempProject);
+        Integer newProjectId = newProject.getId();
+
+        return "{\"ok\":\"true\", \"newProjectId\": \"" + newProjectId+ "\"}";
     }
+
+
+    /**
+     * project detail的图片
+     *
+     * */
+    @PostMapping("/user/project-img-upload")
+    public String projectImgUpload(@RequestParam("token") String tokenStr,
+                                   @RequestParam("newProjectId") Integer  newProjectIdPara,
+                                   @RequestParam("pic") MultipartFile multipartFilePara){
+        if (tokenStr == null) {
+            return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
+        } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
+            return "{\"ok\":\"false\", \"reason\":\"您的Token已过期,请重新登录\"}";
+        }
+
+        Integer newProjectId = newProjectIdPara;
+
+        MultipartFile multipartFile = multipartFilePara;
+        int fileNumber = 1; // 图片的序号， 5.jpg
+        if(!multipartFile.isEmpty()){
+            // 获取project目录下最新的id是多少,得到新图片的id
+            //C:\project\demo\src\main\resources\static\img\project
+            String directoryPath = "C:\\project\\demo\\src\\main\\resources\\static\\img\\project\\";
+            List<String> fileNameList = FileUtil.getFileNameList(directoryPath);  // 取出的文件是按顺序排列的, 数字小到大，然后是字母a-z,当然，这里只有数字
+            String lastFileName;
+            if(fileNameList == null){
+                fileNumber = 1;
+            }else{
+                lastFileName = fileNameList.get(fileNameList.size()-1); // 获取最后一个
+                String[] lastFileNameStr = lastFileName.split("\\.");
+                int lastFileNumber = Integer.parseInt(lastFileNameStr[0]);
+                fileNumber = lastFileNumber + 1;
+            }
+
+            // 存储图片
+            try{
+                String filePath = "C:\\project\\demo\\src\\main\\resources\\static\\img\\project";
+                BufferedOutputStream out = new BufferedOutputStream(
+                        new FileOutputStream(new File(filePath  + fileNumber + ".jpg")));//保存图片到目录下
+                out.write(multipartFile.getBytes());
+                out.flush();
+                out.close();
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                return "{\"ok\":\"false\"}";
+            } catch (IOException e) {
+                e.printStackTrace();
+                return "{\"ok\":\"false\"}";
+            }
+        }
+
+        // 存储图片与project的关系字段
+        Project project = projectRepository.findById(newProjectId);
+        String imgListStrPara = project.getImgListStr();
+        if(imgListStrPara == null){
+            imgListStrPara = fileNumber + "_";
+        }else{
+            imgListStrPara = imgListStrPara + fileNumber + "_";
+        }
+        project.setImgListStr(imgListStrPara);
+
+        projectRepository.save(project);
+
+        return "{\"ok\":\"true\", \"imgListStrPara\":\""+ imgListStrPara+ "\"}";
+    }
+
 
 
     /**
@@ -224,7 +325,7 @@ public class UserController {
         } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
             return "{\"ok\":\"false\", \"reason\":\"您的Token已过期,请重新登录\"}";
         }
-        System.out.println("curren User:" + tokenUtil.getUserId(tokenStr));
+
         List<Plan> planList = planRepository.findByUserId(tokenUtil.getUserId(tokenStr));
 
         JSONObject resultJsonObject = new JSONObject();
@@ -282,7 +383,7 @@ public class UserController {
         String currDateStr;
         Date lastClockDate; // 最后一次打卡日期
         int dueTime = 86400000;
-        int heartValuePerClock = 5; // 每次打卡获得的爱心值
+        int heartValuePerClock = 1; // 每次打卡获得的爱心值
 
         try {
             deadlineDate = df.parse(plan.getDeadline());
@@ -292,7 +393,7 @@ public class UserController {
 
             if (plan.getLastClock() == null) { // // 如果为空，说明是第一次打卡
                 plan.setLastClock(currDateStr);
-                plan.setValue(plan.getValue() + heartValuePerClock);
+                plan.setValue(plan.getValue() + heartValuePerClock); // 新建计划时爱心值为0
                 plan.setFinishedTimes(plan.getFinishedTimes() + 1);
                 planRepository.save(plan);   // TODO:测试这里会不会覆盖原有的，还是新创建了   PASS:会覆盖原有的（相当于更新了）
                 return "{\"ok\":\"true\", \"reason\":\"第一天打卡完成\"}";
@@ -306,10 +407,15 @@ public class UserController {
                         String stillKeepingPara = "over";
                         plan.setStillKeeping(stillKeepingPara);
                         //planRepository.save(plan);
+                        // 设置用户的plan数量+1
                         UserPlan userPlan = userPlanRepository.findByUserId(userId);
                         Integer newPlanNumber = userPlan.getPlanNumber() + 1;
                         userPlan.setPlanNumber(newPlanNumber);
                         userPlanRepository.save(userPlan);
+                        // 将该计划的爱心值加到用户的爱心值中
+                        User user = userRepository.findById(userId);
+                        user.setValue(plan.getValue());
+                        userRepository.save(user);
                     } else {
                         planRepository.save(plan);
                     }
@@ -393,6 +499,32 @@ public class UserController {
     }
 
 
+    /**
+     * 删除习惯
+     *
+     * @param tokenStr token
+     * @param planIdPara 需要删除的plan 的id
+     * @return String 返回是否成功删除
+     * */
+    @PostMapping("/user/del-plan")
+    public String delPlan(@RequestParam("token") String tokenStr,
+                          @RequestParam("planId") Integer planIdPara){
+        if (tokenStr == null) {
+            return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
+        } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
+            return "{\"ok\":\"false\", \"reason\":\"您的Token已过期,请重新登录\"}";
+        }
+
+        Integer planId = planIdPara;
+        planRepository.delete(planId);
+
+        return "{\"ok\":\"true\"}";
+    }
+
+
+
+
+
     // TODO:捐款
     /**
      * 捐款
@@ -405,7 +537,7 @@ public class UserController {
     * 测试图片上传
     *
     * */
-    @PostMapping("/user/pic-upload-test")
+    /*@PostMapping("/user/pic-upload-test")
     public String picUpload(@RequestParam("name") String picName,
                             @RequestParam("pic") MultipartFile multipartFilePara){
         MultipartFile multipartFile = multipartFilePara;
@@ -434,7 +566,7 @@ public class UserController {
         return "{\"ok\":\"true\"}";
     }
 
-
+*/
 
 
 
