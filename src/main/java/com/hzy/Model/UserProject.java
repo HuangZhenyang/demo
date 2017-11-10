@@ -14,10 +14,10 @@ import java.io.Serializable;
 @Table(name = "user_project")
 @IdClass(UserProjectMultiKeysClass.class)
 public class UserProject  implements Serializable {
-    private double donateMoney;
-    private Integer userId;
-    private Integer projectId;
-    private String timestamp;
+    private double donateMoney; // 捐赠的钱
+    private Integer userId; // 用户的id
+    private Integer projectId;  // 捐赠的项目id
+    private String timestamp; // 时间戳
 
     @Id
     public Integer getUserId(){

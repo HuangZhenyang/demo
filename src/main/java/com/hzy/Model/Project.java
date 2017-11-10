@@ -23,12 +23,16 @@ public class Project {
     private String detail; // 项目详情
     private String imgListStr; // 项目所有图片的id组成的字符串  1_2_3
     private Integer userId; // 发起的用户id
+    private String over; // 是否已经完成捐助； "true" 表示完成， "false"表示未完成
+    private String startDate; // 发布的时间
 
     // 构造器
     public Project() {
     }
 
-    public Project(String projectName, String initiatorName, Integer img, String description, double targetMoney, double currentMoney, String detail, String imgListStr, Integer userId) {
+    public Project(String projectName, String initiatorName, Integer img, String description,
+                   double targetMoney, double currentMoney, String detail, String imgListStr,
+                   Integer userId, String over, String startDate) {
         this.projectName = projectName;
         this.initiatorName = initiatorName;
         this.img = img;
@@ -38,6 +42,8 @@ public class Project {
         this.detail = detail;
         this.imgListStr = imgListStr;
         this.userId = userId;
+        this.over = over;
+        this.startDate = startDate;
     }
 
     //getter and setter
@@ -119,5 +125,21 @@ public class Project {
 
     public void setUserId(Integer userId) {
         this.userId = userId;
+    }
+
+    public String getOver() {
+        return over;
+    }
+
+    public void setOver(String over) {
+        this.over = over;
+    }
+
+    public String getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(String startDate) {
+        this.startDate = startDate;
     }
 }

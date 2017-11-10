@@ -50,7 +50,7 @@ public class UserController {
     private PlanRepository planRepository;
 
     @Autowired
-    private TokenRepository tokenRepository;
+    private UserProjectRepository userProjectRepository;
 
     @Autowired
     private UserPlanRepository userPlanRepository;
@@ -158,6 +158,7 @@ public class UserController {
         List<News> newsList = newsRepository.findTop3ByOrderByIdDesc();
         for (News news : newsList) {
             JSONObject newsJsonObject = new JSONObject();
+            newsJsonObject.put("id", news.getId());
             newsJsonObject.put("href", "/img/news/" + news.getId() + ".jpg");
             newsJsonObject.put("imgUrl", "/img/news/" + news.getImg() + ".jpg");
             newsJsonObject.put("newsDetail", news.getNewsDetail());
@@ -171,6 +172,7 @@ public class UserController {
         for (Project project : projectList) {
             JSONObject projectsJsonObject = new JSONObject();  // 在for循环里初始化，才不会出bug
 
+            projectsJsonObject.put("id", project.getId());
             projectsJsonObject.put("href", "/project/" + project.getId());
             projectsJsonObject.put("projectName", project.getProjectName());
             projectsJsonObject.put("initiatorName", project.getInitiatorName());
@@ -181,6 +183,8 @@ public class UserController {
             projectsJsonObject.put("detail", project.getDetail());
             projectsJsonObject.put("imgListStr", project.getImgListStr());
             projectsJsonObject.put("userId", project.getUserId());
+            projectsJsonObject.put("over", project.getOver());
+            projectsJsonObject.put("startTime", project.getStartDate());
             //获取已经捐赠的人数
             projectsJsonObject.put("peopleNumber", "" + userProjectService.getNumberByProjectId(project.getId()));
 
@@ -191,11 +195,6 @@ public class UserController {
         return resultJsonObject.toString();
 //        }
     }
-
-    /**
-     * TODO:上传project news的图片
-     *
-     * */
 
 
     /**
@@ -237,6 +236,10 @@ public class UserController {
         tempProject.setTargetMoney(targetMoneyPara);
         tempProject.setDetail(detailPara);
         tempProject.setUserId(user.getId());
+        String overStr = "false";
+        tempProject.setOver(overStr);
+        String startDateStr = df.format(new Date());
+        tempProject.setStartDate(startDateStr);
         //保存
         Project newProject = projectRepository.save(tempProject);
         Integer newProjectId = newProject.getId();
@@ -247,7 +250,9 @@ public class UserController {
 
     /**
      * project detail的图片
-     *
+     * @param tokenStr token
+     * @param newProjectIdPara  新建项目的id
+     * @param multipartFilePara 图片
      * */
     @PostMapping("/user/project-img-upload")
     public String projectImgUpload(@RequestParam("token") String tokenStr,
@@ -300,6 +305,7 @@ public class UserController {
         Project project = projectRepository.findById(newProjectId);
         String imgListStrPara = project.getImgListStr();
         if(imgListStrPara == null){
+            project.setImg(fileNumber);  // 将该项目首页的图片设置为上传的第一张图片
             imgListStrPara = fileNumber + "_";
         }else{
             imgListStrPara = imgListStrPara + fileNumber + "_";
@@ -312,10 +318,84 @@ public class UserController {
     }
 
 
+    /**
+     * 捐款
+     *
+     * 前端如果判断currentMoney和targetMoney相等，就显示已经完成该项目
+     * 判断加上去后新的money的值，并判断加上去以后会不会超过targetMoney
+     * 如果会，则退一部分款项； 新建一个userProject对象，存进数据库
+     *
+     * @param tokenStr token
+     * @param projectIdPara 要捐款的项目的id
+     * @param numOfMoneyPara  捐的数量
+     * */
+    @PostMapping("/user/donate")
+    public String donateProject(@RequestParam("token") String tokenStr,
+                                @RequestParam("projectId") Integer projectIdPara,
+                                @RequestParam("numOfMoney") double numOfMoneyPara){
+        if (tokenStr == null) {
+            return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
+        } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
+            return "{\"ok\":\"false\", \"reason\":\"您的Token已过期,请重新登录\"}";
+        }
+
+        User user = userRepository.findById(tokenUtil.getUserId(tokenStr));
+        Integer projectId = projectIdPara;
+        double numOfMoney = numOfMoneyPara;
+        Project project = projectRepository.findById(projectId);
+        UserProject userProject = new UserProject();
+
+        //计算加上去后的新的当前money
+        double targetMoney = project.getTargetMoney();
+        double currentMoney = project.getCurrentMoney();
+        double newMoney = currentMoney + numOfMoney;
+        double userCurrBalance = user.getBalance();
+        double userCurrValue = user.getValue();
+        if(newMoney > targetMoney){  // 如果当前的捐款 加上 用户该捐款大于目标金额，则只扣除需要的那部分
+            // 只减去用户余额中 targetMoney-currentMoney的那部分
+            if(userCurrBalance - (targetMoney - currentMoney) < 0){
+                return "{\"ok\":\"false\",\"reason\":\"您的余额不足\"}";
+            }
+            user.setBalance(userCurrBalance - (targetMoney - currentMoney));
+            user.setValue(userCurrValue + 0.5*(targetMoney - currentMoney));
+            userRepository.save(user);
+
+            project.setCurrentMoney(targetMoney);
+            String overStr = "true";
+            project.setOver(overStr);
+            projectRepository.save(project);
+
+            userProject.setDonateMoney(targetMoney - currentMoney);
+
+        }else{
+            if(userCurrBalance < numOfMoney){
+                return "{\"ok\":\"false\",\"reason\":\"您的余额不足\"}";
+            }
+            user.setBalance(userCurrBalance - numOfMoney);
+            user.setValue(userCurrValue + 0.5*numOfMoney);
+            userRepository.save(user);
+            project.setCurrentMoney(newMoney);
+            projectRepository.save(project);
+
+            userProject.setDonateMoney(numOfMoney);
+
+        }
+
+        userProject.setUserId(user.getId());
+        userProject.setProjectId(projectId);
+        SimpleDateFormat userProjectDateFormate = new SimpleDateFormat("yyyy-MM-dd hh-mm-ss");//设置日期格式
+        String timestampStr = userProjectDateFormate.format(new Date());
+        userProject.setTimestamp(timestampStr);
+
+        userProjectRepository.save(userProject);
+
+        return "{\"ok\":\"true\"}";
+    }
+
 
     /**
      * 获取习惯
-     *
+     * @param tokenStr token
      * @return String 返回用户的所有习惯
      */
     @PostMapping("/user/get-plans")
@@ -524,12 +604,6 @@ public class UserController {
 
 
 
-
-    // TODO:捐款
-    /**
-     * 捐款
-     *
-     * */
 
 
 
