@@ -285,7 +285,7 @@ public class UserController {
 
             // 存储图片
             try{
-                String filePath = "C:\\project\\demo\\src\\main\\resources\\static\\img\\project";
+                String filePath = "C:\\project\\demo\\src\\main\\resources\\static\\img\\project\\";
                 BufferedOutputStream out = new BufferedOutputStream(
                         new FileOutputStream(new File(filePath  + fileNumber + ".jpg")));//保存图片到目录下
                 out.write(multipartFile.getBytes());
