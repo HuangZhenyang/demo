@@ -55,6 +55,9 @@ public class UserController {
     @Autowired
     private UserPlanRepository userPlanRepository;
 
+    @Autowired
+    private UserMessageRepository userMessageRepository;
+
     private TokenUtil tokenUtil = new TokenUtil();
 
     private static SimpleDateFormat df =
@@ -152,6 +155,7 @@ public class UserController {
         userJsonObject.put("gender", user.getGender());
         userJsonObject.put("balance", user.getBalance());
         userJsonObject.put("head", "/img/head/" + user.getHead() + ".jpg");
+        userJsonObject.put("value", user.getValue());
 
         resultJsonObject.put("user", userJsonObject);
 
@@ -334,7 +338,8 @@ public class UserController {
     @PostMapping("/user/donate")
     public String donateProject(@RequestParam("token") String tokenStr,
                                 @RequestParam("projectId") Integer projectIdPara,
-                                @RequestParam("numOfMoney") double numOfMoneyPara){
+                                @RequestParam("numOfMoney") double numOfMoneyPara,
+                                @RequestParam("message") String messagePara){
         if (tokenStr == null) {
             return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
         } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
@@ -344,6 +349,7 @@ public class UserController {
         User user = userRepository.findById(tokenUtil.getUserId(tokenStr));
         Integer projectId = projectIdPara;
         double numOfMoney = numOfMoneyPara;
+        String message = messagePara;
         Project project = projectRepository.findById(projectId);
         if(project == null){
             return "{\"ok\":\"false\",\"reason\":\"project id: " + projectId + "找不到了 ！\"}";
@@ -388,7 +394,7 @@ public class UserController {
             userProject.setDonateMoney(numOfMoney);
 
         }
-
+        //userProject
         userProject.setUserId(user.getId());
         userProject.setProjectId(projectId);
         SimpleDateFormat userProjectDateFormate = new SimpleDateFormat("yyyy-MM-dd hh-mm-ss");//设置日期格式
@@ -396,6 +402,15 @@ public class UserController {
         userProject.setTimestamp(timestampStr);
 
         userProjectRepository.save(userProject);
+
+        //user message
+        UserMessage userMessage = new UserMessage();
+        userMessage.setMessage(message);
+        userMessage.setUserId(user.getId());
+        userMessage.setProjectId(projectId);
+        userMessage.setTimestamp(timestampStr);
+
+        userMessageRepository.save(userMessage);
 
         return "{\"ok\":\"true\"}";
     }
@@ -457,7 +472,6 @@ public class UserController {
         }
 
         Integer userId = tokenUtil.getUserId(tokenStr);
-
 
         // 前端判断为false以后就设置打卡按钮不可点击
         // 首先检查今天打卡的日期与最后一次打卡日期是不是差了一天，是的话进行下一步，
@@ -611,12 +625,12 @@ public class UserController {
 
 
     /**
-     * 获取所有的捐款动态
+     * 获取所有的捐款message
      *
      * @param tokenStr token
-     * @return String 返回所有的捐款动态
+     * @return String 返回用户信息，项目名字，message, timestamp
      * */
-    @PostMapping("/user/get-donation-info")
+    @PostMapping("/user/get-user-message")
     public String getDonationInfo(@RequestParam("token") String tokenStr){
         if (tokenStr == null) {
             return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
@@ -624,51 +638,38 @@ public class UserController {
             return "{\"ok\":\"false\", \"reason\":\"您的Token已过期,请重新登录\"}";
         }
 
-        List<UserProject> userProjectList = userProjectRepository.findAll();
-        if(userProjectList == null || userProjectList.size() == 0){
-            return "{\"ok\":\"false\", \"reason\":\"userProjectList为null\"}";
+        List<UserMessage> userMessageList = userMessageRepository.findAll();
+        if(userMessageList == null || userMessageList.size() == 0){
+            return "{\"ok\":\"false\", \"reason\":\"userProjectList为空\"}";
         }
         JSONObject resultJsonObject = new JSONObject();
-        JSONArray userJsonArray = new JSONArray();
-        JSONArray projectJsonArray = new JSONArray();
+        JSONArray userMessageJsonArray = new JSONArray();
+        for (UserMessage userMessage:userMessageList) {
+            JSONObject userMessageJsonObject = new JSONObject();
+            User user = userRepository.findById(userMessage.getUserId());
+            Project project = projectRepository.findById(userMessage.getProjectId());
+            String message = userMessage.getMessage();
+            String timestamp = userMessage.getTimestamp();
+            // user
+            userMessageJsonObject.put("name", user.getId());
+            userMessageJsonObject.put("email", user.getEmail());
+            userMessageJsonObject.put("region", user.getRegion());
+            userMessageJsonObject.put("gender", user.getGender());
+            userMessageJsonObject.put("balance", user.getBalance());
+            userMessageJsonObject.put("head", "/img/head/" + user.getHead() + ".jpg");
+            userMessageJsonObject.put("value", user.getValue());
+            // project
+            userMessageJsonObject.put("projectName", project.getProjectName());
+            // message
+            userMessageJsonObject.put("message", message);
+            // timestamp
+            userMessageJsonObject.put("timestamp", timestamp);
 
-        for (UserProject userProject: userProjectList) {
-            Integer tempUserId = userProject.getUserId();
-            Integer tempProjectId = userProject.getProjectId();
-            User tempUser = userRepository.findById(tempUserId);
-            Project tempProject = projectRepository.findById(tempProjectId);
-            JSONObject tempUserJsonObject = new JSONObject();
-            JSONObject tempProjectJsonObject = new JSONObject();
-
-            tempUserJsonObject.put("name", tempUser.getId());
-            tempUserJsonObject.put("email", tempUser.getEmail());
-            tempUserJsonObject.put("region", tempUser.getRegion());
-            tempUserJsonObject.put("gender", tempUser.getGender());
-            tempUserJsonObject.put("balance", tempUser.getBalance());
-            tempUserJsonObject.put("head", "/img/head/" + tempUser.getHead() + ".jpg");
-            userJsonArray.put(tempUserJsonObject);
-
-            tempProjectJsonObject.put("id", tempProject.getId());
-            tempProjectJsonObject.put("href", "/project/" + tempProject.getId());
-            tempProjectJsonObject.put("projectName", tempProject.getProjectName());
-            tempProjectJsonObject.put("initiatorName", tempProject.getInitiatorName());
-            tempProjectJsonObject.put("img", "/img/project/" + tempProject.getImg() + ".jpg");
-            tempProjectJsonObject.put("description", tempProject.getDescription());
-            tempProjectJsonObject.put("targetMoney", tempProject.getTargetMoney());
-            tempProjectJsonObject.put("currentMoney", tempProject.getCurrentMoney());
-            tempProjectJsonObject.put("detail", tempProject.getDetail());
-            tempProjectJsonObject.put("imgListStr", tempProject.getImgListStr());
-            tempProjectJsonObject.put("userId", tempProject.getUserId());
-            tempProjectJsonObject.put("over", tempProject.getOver());
-            tempProjectJsonObject.put("startTime", tempProject.getStartDate());
-            //获取已经捐赠的人数
-            tempProjectJsonObject.put("peopleNumber", "" + userProjectService.getNumberByProjectId(tempProject.getId()));
-            projectJsonArray.put(tempProjectJsonObject);
-
+            userMessageJsonArray.put(userMessageJsonObject);
         }
+
         resultJsonObject.put("ok","true");
-        resultJsonObject.put("user", userJsonArray);
-        resultJsonObject.put("project", projectJsonArray);
+        resultJsonObject.put("userMessage", userMessageJsonArray);
 
         return resultJsonObject.toString();
     }
