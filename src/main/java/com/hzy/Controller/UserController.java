@@ -192,6 +192,7 @@ public class UserController {
             projectsJsonArray.put(projectsJsonObject);
         }
         resultJsonObject.put("projects", projectsJsonArray);
+        resultJsonObject.put("ok","true");
 
         return resultJsonObject.toString();
 //        }
@@ -609,8 +610,68 @@ public class UserController {
     }
 
 
+    /**
+     * 获取所有的捐款动态
+     *
+     * @param tokenStr token
+     * @return String 返回所有的捐款动态
+     * */
+    @PostMapping("/user/get-donation-info")
+    public String getDonationInfo(@RequestParam("token") String tokenStr){
+        if (tokenStr == null) {
+            return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
+        } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
+            return "{\"ok\":\"false\", \"reason\":\"您的Token已过期,请重新登录\"}";
+        }
 
+        List<UserProject> userProjectList = userProjectRepository.findAll();
+        if(userProjectList == null || userProjectList.size() == 0){
+            return "{\"ok\":\"false\", \"reason\":\"userProjectList为null\"}";
+        }
+        JSONObject resultJsonObject = new JSONObject();
+        JSONArray userJsonArray = new JSONArray();
+        JSONArray projectJsonArray = new JSONArray();
 
+        for (UserProject userProject: userProjectList) {
+            Integer tempUserId = userProject.getUserId();
+            Integer tempProjectId = userProject.getProjectId();
+            User tempUser = userRepository.findById(tempUserId);
+            Project tempProject = projectRepository.findById(tempProjectId);
+            JSONObject tempUserJsonObject = new JSONObject();
+            JSONObject tempProjectJsonObject = new JSONObject();
+
+            tempUserJsonObject.put("name", tempUser.getId());
+            tempUserJsonObject.put("email", tempUser.getEmail());
+            tempUserJsonObject.put("region", tempUser.getRegion());
+            tempUserJsonObject.put("gender", tempUser.getGender());
+            tempUserJsonObject.put("balance", tempUser.getBalance());
+            tempUserJsonObject.put("head", "/img/head/" + tempUser.getHead() + ".jpg");
+            userJsonArray.put(tempProjectJsonObject);
+
+            tempProjectJsonObject.put("id", tempProject.getId());
+            tempProjectJsonObject.put("href", "/project/" + tempProject.getId());
+            tempProjectJsonObject.put("projectName", tempProject.getProjectName());
+            tempProjectJsonObject.put("initiatorName", tempProject.getInitiatorName());
+            tempProjectJsonObject.put("img", "/img/project/" + tempProject.getImg() + ".jpg");
+            tempProjectJsonObject.put("description", tempProject.getDescription());
+            tempProjectJsonObject.put("targetMoney", tempProject.getTargetMoney());
+            tempProjectJsonObject.put("currentMoney", tempProject.getCurrentMoney());
+            tempProjectJsonObject.put("detail", tempProject.getDetail());
+            tempProjectJsonObject.put("imgListStr", tempProject.getImgListStr());
+            tempProjectJsonObject.put("userId", tempProject.getUserId());
+            tempProjectJsonObject.put("over", tempProject.getOver());
+            tempProjectJsonObject.put("startTime", tempProject.getStartDate());
+            //获取已经捐赠的人数
+            tempProjectJsonObject.put("peopleNumber", "" + userProjectService.getNumberByProjectId(tempProject.getId()));
+            projectJsonArray.put(tempProjectJsonObject);
+
+        }
+        resultJsonObject.put("ok","true");
+        resultJsonObject.put("user", userJsonArray);
+        resultJsonObject.put("project", projectJsonArray);
+
+        return resultJsonObject.toString();
+    }
 
 
 
