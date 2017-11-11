@@ -1,22 +1,25 @@
-/*
+
 package com.hzy;
 
-*/
+
 /**
  * Created by huangzhenyang on 2017/10/8.
  * 测试布萌接口
- *//*
+ */
 
 
 import bubi4j.Account;
 import bubi4j.Asset;
 import bubi4j.common.BubiServiceFactory;
 import com.alibaba.fastjson.JSON;
+
+import okhttp3.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,11 +40,11 @@ public class BumengTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println("accessToken:" + accessToken);
+        System.out.println("accessToken:   " + accessToken);
 
-        */
-/*//*
-/待注册布比账户名
+
+
+        //待注册布比账户名
         String userName = "b121042";
         //待注册布比账户密码
         String password = "qaz12345678";
@@ -61,7 +64,7 @@ public class BumengTest {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        System.out.println("user register result: "+result);*//*
+        System.out.println("user register result: "+result);
 
 
         //[必填] 资产发行商布比地址 即bubi_id
@@ -87,5 +90,35 @@ public class BumengTest {
         }
         System.out.println("发行资产result：" + result);
     }
+
+    @Test
+    public void testBumengAPI(){
+        String url = "https://api.bubidev.cn/oauth2/token";
+        String appid = "7dfd883aaf191c575283c31266de6ad3";
+        String appkey = "e8aa8f04e31d1321699266e45b89f5fc";
+        String grantType = "client_credentials";
+
+        OkHttpClient okHttpClient = new OkHttpClient();
+
+        RequestBody body = new FormBody.Builder()
+                .add("client_id", appid)
+                .add("client_secret", appkey)
+                .add("grant_type", grantType)
+                .build();
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(body)
+                .build();
+
+        try {
+            Response response = okHttpClient.newCall(request).execute();
+            String responseData = response.body().string();
+            System.out.println("token:   "+responseData);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 }
-*/
+

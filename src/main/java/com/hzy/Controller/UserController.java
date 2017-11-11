@@ -73,6 +73,7 @@ public class UserController {
         user.setRegion(region);
         user.setGender(gender);
         user.setBalance(0.00);
+        user.setValue(0.00);
 
         String result;
 
@@ -343,6 +344,10 @@ public class UserController {
         Integer projectId = projectIdPara;
         double numOfMoney = numOfMoneyPara;
         Project project = projectRepository.findById(projectId);
+        if(project == null){
+            return "{\"ok\":\"false\",\"reason\":\"project id: " + projectId + "找不到了 ！\"}";
+        }
+
         UserProject userProject = new UserProject();
 
         //计算加上去后的新的当前money
@@ -351,6 +356,8 @@ public class UserController {
         double newMoney = currentMoney + numOfMoney;
         double userCurrBalance = user.getBalance();
         double userCurrValue = user.getValue();
+
+
         if(newMoney > targetMoney){  // 如果当前的捐款 加上 用户该捐款大于目标金额，则只扣除需要的那部分
             // 只减去用户余额中 targetMoney-currentMoney的那部分
             if(userCurrBalance - (targetMoney - currentMoney) < 0){
