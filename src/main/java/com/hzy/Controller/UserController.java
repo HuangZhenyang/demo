@@ -1,5 +1,6 @@
 package com.hzy.Controller;
 
+import com.alibaba.fastjson.JSON;
 import com.hzy.Model.*;
 import com.hzy.Repository.*;
 import com.hzy.Service.ProjectService;
@@ -640,7 +641,7 @@ public class UserController {
 
         List<UserMessage> userMessageList = userMessageRepository.findAll();
         if(userMessageList == null || userMessageList.size() == 0){
-            return "{\"ok\":\"false\", \"reason\":\"userProjectList为空\"}";
+            return "{\"ok\":\"false\", \"reason\":\"userMessageList为空\"}";
         }
         JSONObject resultJsonObject = new JSONObject();
         JSONArray userMessageJsonArray = new JSONArray();
@@ -673,6 +674,51 @@ public class UserController {
 
         return resultJsonObject.toString();
     }
+
+
+    /**
+     * 返回捐赠该项目的用户名字，头像，捐了多少钱，时间戳
+     *
+     * */
+    @PostMapping("/user/get-all-donation")
+    public String getAllDonation(@RequestParam("token") String tokenStr,
+                                 @RequestParam("projectId") Integer projectIdPara){
+        if (tokenStr == null) {
+            return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
+        } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
+            return "{\"ok\":\"false\", \"reason\":\"您的Token已过期,请重新登录\"}";
+        }
+
+        Integer projectId = projectIdPara;
+        List<UserProject> userProjectList = userProjectRepository.findByProjectId(projectId);
+        if(userProjectList == null || userProjectList.size() == 0){
+            return "{\"ok\":\"false\", \"reason\":\"userProjectList为空\"}";
+        }
+
+        JSONObject resultJsonObject = new JSONObject();
+        JSONArray tempJsonArray = new JSONArray();
+
+        for (UserProject userProject:userProjectList) {
+            JSONObject tempJsonObject = new JSONObject();
+            User user = userRepository.findById(userProject.getUserId());
+
+            tempJsonObject.put("userName", user.getName());
+            tempJsonObject.put("head", "/img/head/" + user.getHead() + ".jpg");
+            tempJsonObject.put("donateMoney", userProject.getDonateMoney());
+            tempJsonObject.put("timestamp", userProject.getTimestamp());
+
+            tempJsonArray.put(tempJsonObject);
+        }
+
+        resultJsonObject.put("ok", "true");
+        resultJsonObject.put("result", tempJsonArray);
+
+        return resultJsonObject.toString();
+    }
+
+
+
+
 
 
 
