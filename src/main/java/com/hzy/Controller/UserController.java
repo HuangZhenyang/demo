@@ -646,7 +646,7 @@ public class UserController {
             tempUserJsonObject.put("gender", tempUser.getGender());
             tempUserJsonObject.put("balance", tempUser.getBalance());
             tempUserJsonObject.put("head", "/img/head/" + tempUser.getHead() + ".jpg");
-            userJsonArray.put(tempProjectJsonObject);
+            userJsonArray.put(tempUserJsonObject);
 
             tempProjectJsonObject.put("id", tempProject.getId());
             tempProjectJsonObject.put("href", "/project/" + tempProject.getId());
