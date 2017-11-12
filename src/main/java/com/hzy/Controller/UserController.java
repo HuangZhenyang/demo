@@ -727,6 +727,10 @@ public class UserController {
 
     /**
      * 用户关注项目
+     *
+     * @param tokenStr token
+     * @param projectIdPara  项目id
+     * @return String 返回关注的结果
      */
     @PostMapping("/user/star-project")
     public String starProject(@RequestParam("token") String tokenStr,
@@ -755,6 +759,10 @@ public class UserController {
 
     /**
      * 取消关注项目
+     *
+     * @param tokenStr  token
+     * @param projectIdPara 项目id
+     * @return  String 返回取消关注的结果
      */
     @PostMapping("/user/cancel-start-project")
     public String cancelStarProject(@RequestParam("token") String tokenStr,
@@ -779,6 +787,10 @@ public class UserController {
 
     /**
      * 进入项目详情时返回用户是否关注该项目
+     *
+     * @param tokenStr token
+     * @param projectIdPara 项目id
+     * @return String 返回用户是否关注了该项目的结果
      */
     @PostMapping("/user/if-has-stared")
     public String ifHasStared(@RequestParam("token") String tokenStr,
@@ -802,6 +814,9 @@ public class UserController {
 
     /**
      * 返回用户关注项目(userstar)，捐助过的项目(userproject)，发布的项目(project)
+     *
+     * @param tokenStr token
+     * @return String  返回用户关注项目(userstar)，捐助过的项目(userproject)，发布的项目(project)
      */
     @PostMapping("/user/get-related-projects")
     public String getRelatedProjects(@RequestParam("token") String tokenStr) {
