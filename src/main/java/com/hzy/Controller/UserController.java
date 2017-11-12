@@ -1,6 +1,6 @@
 package com.hzy.Controller;
 
-import com.alibaba.fastjson.JSON;
+
 import com.hzy.Model.*;
 import com.hzy.Repository.*;
 import com.hzy.Service.ProjectService;
@@ -58,6 +58,9 @@ public class UserController {
 
     @Autowired
     private UserMessageRepository userMessageRepository;
+
+    @Autowired
+    private UserStarRepository userStarRepository;
 
     private TokenUtil tokenUtil = new TokenUtil();
 
@@ -197,7 +200,7 @@ public class UserController {
             projectsJsonArray.put(projectsJsonObject);
         }
         resultJsonObject.put("projects", projectsJsonArray);
-        resultJsonObject.put("ok","true");
+        resultJsonObject.put("ok", "true");
 
         return resultJsonObject.toString();
 //        }
@@ -206,14 +209,14 @@ public class UserController {
 
     /**
      * 客户端先上传项目的信息，服务端返回该新项目的id, 客户端传图片的时候带着项目id
-     *  爱心值达到200才能发布项目
+     * 爱心值达到200才能发布项目
      *
-     *  @param tokenStr token
-     *  @param projectNamePara 项目名称
-     *  @param initiatorNamePara 发起方的名字（如果是用户就是用户名）
-     *  @param descriptionPara 项目的简短的一句话描述
-     *  @param targetMoneyPara 目标筹款金额
-     *  @param detailPara  项目的具体详情描述（仅包含文字）
+     * @param tokenStr          token
+     * @param projectNamePara   项目名称
+     * @param initiatorNamePara 发起方的名字（如果是用户就是用户名）
+     * @param descriptionPara   项目的简短的一句话描述
+     * @param targetMoneyPara   目标筹款金额
+     * @param detailPara        项目的具体详情描述（仅包含文字）
      */
     @PostMapping("/user/publish-project")
     public String publishProject(@RequestParam("token") String tokenStr,
@@ -231,7 +234,7 @@ public class UserController {
         // 创建对象
         User user = userRepository.findById(tokenUtil.getUserId(tokenStr));
         // 判断用户爱心值是否超过200
-        if(user.getValue() < 200){
+        if (user.getValue() < 200) {
             return "{\"ok\":\"false\", \"reason\":\"您的爱心值不够哦\"}";
         }
 
@@ -251,20 +254,21 @@ public class UserController {
         Project newProject = projectRepository.save(tempProject);
         Integer newProjectId = newProject.getId();
 
-        return "{\"ok\":\"true\", \"newProjectId\": \"" + newProjectId+ "\"}";
+        return "{\"ok\":\"true\", \"newProjectId\": \"" + newProjectId + "\"}";
     }
 
 
     /**
      * project detail的图片
-     * @param tokenStr token
+     *
+     * @param tokenStr          token
      * @param newProjectIdPara  新建项目的id
      * @param multipartFilePara 图片
-     * */
+     */
     @PostMapping("/user/project-img-upload")
     public String projectImgUpload(@RequestParam("token") String tokenStr,
-                                   @RequestParam("newProjectId") Integer  newProjectIdPara,
-                                   @RequestParam("pic") MultipartFile multipartFilePara){
+                                   @RequestParam("newProjectId") Integer newProjectIdPara,
+                                   @RequestParam("pic") MultipartFile multipartFilePara) {
         if (tokenStr == null) {
             return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
         } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
@@ -275,26 +279,26 @@ public class UserController {
 
         MultipartFile multipartFile = multipartFilePara;
         int fileNumber = 1; // 图片的序号， 5.jpg
-        if(!multipartFile.isEmpty()){
+        if (!multipartFile.isEmpty()) {
             // 获取project目录下最新的id是多少,得到新图片的id
             //C:\project\demo\src\main\resources\static\img\project
             String directoryPath = "C:\\project\\demo\\src\\main\\resources\\static\\img\\project\\";
             List<String> fileNameList = FileUtil.getFileNameList(directoryPath);  // 取出的文件是按顺序排列的, 数字小到大，然后是字母a-z,当然，这里只有数字
             String lastFileName;
-            if(fileNameList == null){
+            if (fileNameList == null) {
                 fileNumber = 1;
-            }else{
-                lastFileName = fileNameList.get(fileNameList.size()-1); // 获取最后一个
+            } else {
+                lastFileName = fileNameList.get(fileNameList.size() - 1); // 获取最后一个
                 String[] lastFileNameStr = lastFileName.split("\\.");
                 int lastFileNumber = Integer.parseInt(lastFileNameStr[0]);
                 fileNumber = lastFileNumber + 1;
             }
 
             // 存储图片
-            try{
+            try {
                 String filePath = "C:\\project\\demo\\src\\main\\resources\\static\\img\\project\\";
                 BufferedOutputStream out = new BufferedOutputStream(
-                        new FileOutputStream(new File(filePath  + fileNumber + ".jpg")));//保存图片到目录下
+                        new FileOutputStream(new File(filePath + fileNumber + ".jpg")));//保存图片到目录下
                 out.write(multipartFile.getBytes());
                 out.flush();
                 out.close();
@@ -311,36 +315,36 @@ public class UserController {
         // 存储图片与project的关系字段
         Project project = projectRepository.findById(newProjectId);
         String imgListStrPara = project.getImgListStr();
-        if(imgListStrPara == null){
+        if (imgListStrPara == null) {
             project.setImg(fileNumber);  // 将该项目首页的图片设置为上传的第一张图片
             imgListStrPara = fileNumber + "_";
-        }else{
+        } else {
             imgListStrPara = imgListStrPara + fileNumber + "_";
         }
         project.setImgListStr(imgListStrPara);
 
         projectRepository.save(project);
 
-        return "{\"ok\":\"true\", \"imgListStrPara\":\""+ imgListStrPara+ "\"}";
+        return "{\"ok\":\"true\", \"imgListStrPara\":\"" + imgListStrPara + "\"}";
     }
 
 
     /**
      * 捐款
-     *
+     * <p>
      * 前端如果判断currentMoney和targetMoney相等，就显示已经完成该项目
      * 判断加上去后新的money的值，并判断加上去以后会不会超过targetMoney
      * 如果会，则退一部分款项； 新建一个userProject对象，存进数据库
      *
-     * @param tokenStr token
-     * @param projectIdPara 要捐款的项目的id
-     * @param numOfMoneyPara  捐的数量
-     * */
+     * @param tokenStr       token
+     * @param projectIdPara  要捐款的项目的id
+     * @param numOfMoneyPara 捐的数量
+     */
     @PostMapping("/user/donate")
     public String donateProject(@RequestParam("token") String tokenStr,
                                 @RequestParam("projectId") Integer projectIdPara,
                                 @RequestParam("numOfMoney") double numOfMoneyPara,
-                                @RequestParam("message") String messagePara){
+                                @RequestParam("message") String messagePara) {
         if (tokenStr == null) {
             return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
         } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
@@ -352,7 +356,7 @@ public class UserController {
         double numOfMoney = numOfMoneyPara;
         String message = messagePara;
         Project project = projectRepository.findById(projectId);
-        if(project == null){
+        if (project == null) {
             return "{\"ok\":\"false\",\"reason\":\"project id: " + projectId + "找不到了 ！\"}";
         }
 
@@ -366,13 +370,13 @@ public class UserController {
         double userCurrValue = user.getValue();
 
 
-        if(newMoney > targetMoney){  // 如果当前的捐款 加上 用户该捐款大于目标金额，则只扣除需要的那部分
+        if (newMoney > targetMoney) {  // 如果当前的捐款 加上 用户该捐款大于目标金额，则只扣除需要的那部分
             // 只减去用户余额中 targetMoney-currentMoney的那部分
-            if(userCurrBalance - (targetMoney - currentMoney) < 0){
+            if (userCurrBalance - (targetMoney - currentMoney) < 0) {
                 return "{\"ok\":\"false\",\"reason\":\"您的余额不足\"}";
             }
             user.setBalance(userCurrBalance - (targetMoney - currentMoney));
-            user.setValue(userCurrValue + 0.5*(targetMoney - currentMoney));
+            user.setValue(userCurrValue + 0.5 * (targetMoney - currentMoney));
             userRepository.save(user);
 
             project.setCurrentMoney(targetMoney);
@@ -382,12 +386,12 @@ public class UserController {
 
             userProject.setDonateMoney(targetMoney - currentMoney);
 
-        }else{
-            if(userCurrBalance < numOfMoney){
+        } else {
+            if (userCurrBalance < numOfMoney) {
                 return "{\"ok\":\"false\",\"reason\":\"您的余额不足\"}";
             }
             user.setBalance(userCurrBalance - numOfMoney);
-            user.setValue(userCurrValue + 0.5*numOfMoney);
+            user.setValue(userCurrValue + 0.5 * numOfMoney);
             userRepository.save(user);
             project.setCurrentMoney(newMoney);
             projectRepository.save(project);
@@ -419,6 +423,7 @@ public class UserController {
 
     /**
      * 获取习惯
+     *
      * @param tokenStr token
      * @return String 返回用户的所有习惯
      */
@@ -605,13 +610,13 @@ public class UserController {
     /**
      * 删除习惯
      *
-     * @param tokenStr token
+     * @param tokenStr   token
      * @param planIdPara 需要删除的plan 的id
      * @return String 返回是否成功删除
-     * */
+     */
     @PostMapping("/user/del-plan")
     public String delPlan(@RequestParam("token") String tokenStr,
-                          @RequestParam("planId") Integer planIdPara){
+                          @RequestParam("planId") Integer planIdPara) {
         if (tokenStr == null) {
             return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
         } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
@@ -630,9 +635,9 @@ public class UserController {
      *
      * @param tokenStr token
      * @return String 返回用户信息，项目名字，message, timestamp
-     * */
+     */
     @PostMapping("/user/get-user-message")
-    public String getDonationInfo(@RequestParam("token") String tokenStr){
+    public String getDonationInfo(@RequestParam("token") String tokenStr) {
         if (tokenStr == null) {
             return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
         } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
@@ -640,12 +645,12 @@ public class UserController {
         }
 
         List<UserMessage> userMessageList = userMessageRepository.findAll();
-        if(userMessageList == null || userMessageList.size() == 0){
+        if (userMessageList == null || userMessageList.size() == 0) {
             return "{\"ok\":\"false\", \"reason\":\"userMessageList为空\"}";
         }
         JSONObject resultJsonObject = new JSONObject();
         JSONArray userMessageJsonArray = new JSONArray();
-        for (UserMessage userMessage:userMessageList) {
+        for (UserMessage userMessage : userMessageList) {
             JSONObject userMessageJsonObject = new JSONObject();
             User user = userRepository.findById(userMessage.getUserId());
             Project project = projectRepository.findById(userMessage.getProjectId());
@@ -669,7 +674,7 @@ public class UserController {
             userMessageJsonArray.put(userMessageJsonObject);
         }
 
-        resultJsonObject.put("ok","true");
+        resultJsonObject.put("ok", "true");
         resultJsonObject.put("userMessage", userMessageJsonArray);
 
         return resultJsonObject.toString();
@@ -677,12 +682,15 @@ public class UserController {
 
 
     /**
-     * 返回捐赠该项目的用户名字，头像，捐了多少钱，时间戳
+     * 获得某个项目所有捐助信息
      *
-     * */
+     * @param tokenStr      token
+     * @param projectIdPara 项目的id
+     * @return 返回捐赠该项目的用户名字，头像，捐了多少钱，时间戳
+     */
     @PostMapping("/user/get-all-donation")
     public String getAllDonation(@RequestParam("token") String tokenStr,
-                                 @RequestParam("projectId") Integer projectIdPara){
+                                 @RequestParam("projectId") Integer projectIdPara) {
         if (tokenStr == null) {
             return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
         } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
@@ -691,14 +699,14 @@ public class UserController {
 
         Integer projectId = projectIdPara;
         List<UserProject> userProjectList = userProjectRepository.findByProjectId(projectId);
-        if(userProjectList == null || userProjectList.size() == 0){
+        if (userProjectList == null || userProjectList.size() == 0) {
             return "{\"ok\":\"false\", \"reason\":\"userProjectList为空\"}";
         }
 
         JSONObject resultJsonObject = new JSONObject();
         JSONArray tempJsonArray = new JSONArray();
 
-        for (UserProject userProject:userProjectList) {
+        for (UserProject userProject : userProjectList) {
             JSONObject tempJsonObject = new JSONObject();
             User user = userRepository.findById(userProject.getUserId());
 
@@ -717,15 +725,206 @@ public class UserController {
     }
 
 
+    /**
+     * 用户关注项目
+     */
+    @PostMapping("/user/star-project")
+    public String starProject(@RequestParam("token") String tokenStr,
+                              @RequestParam("projectId") Integer projectIdPara) {
+        if (tokenStr == null) {
+            return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
+        } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
+            return "{\"ok\":\"false\", \"reason\":\"您的Token已过期,请重新登录\"}";
+        }
 
+        Integer userId = tokenUtil.getUserId(tokenStr); // 用户id
+        Integer projectId = projectIdPara;// project id
+        SimpleDateFormat userStarDateFormate = new SimpleDateFormat("yyyy-MM-dd hh-mm-ss");//设置日期格式
+        String timestampStr = userStarDateFormate.format(new Date()); // 时间戳timestamp
+        UserStar userStar = new UserStar();
 
+        userStar.setUserId(userId);
+        userStar.setProjectId(projectId);
+        userStar.setTimestamp(timestampStr);
 
+        userStarRepository.save(userStar);
+
+        return "{\"ok\":\"true\"}";
+    }
 
 
     /**
-    * 测试图片上传
-    *
-    * */
+     * 取消关注项目
+     */
+    @PostMapping("/user/cancel-start-project")
+    public String cancelStarProject(@RequestParam("token") String tokenStr,
+                                    @RequestParam("projectId") Integer projectIdPara) {
+        if (tokenStr == null) {
+            return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
+        } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
+            return "{\"ok\":\"false\", \"reason\":\"您的Token已过期,请重新登录\"}";
+        }
+
+        Integer userId = tokenUtil.getUserId(tokenStr);
+        Integer projectId = projectIdPara;
+        UserStar userStar = userStarRepository.findByUserIdAndProjectId(userId, projectId);
+        if (userStar != null) {
+            userStarRepository.delete(userStar);
+        } else {
+            return "{\"ok\":\"false\",\"reason\":\"您没有关注该项目\"}";
+        }
+        return "{\"ok\":\"true\"}";
+    }
+
+
+    /**
+     * 进入项目详情时返回用户是否关注该项目
+     */
+    @PostMapping("/user/if-has-stared")
+    public String ifHasStared(@RequestParam("token") String tokenStr,
+                              @RequestParam("projectId") Integer projectIdPara) {
+        if (tokenStr == null) {
+            return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
+        } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
+            return "{\"ok\":\"false\", \"reason\":\"您的Token已过期,请重新登录\"}";
+        }
+
+        Integer userId = tokenUtil.getUserId(tokenStr);
+        Integer projectId = projectIdPara;
+        UserStar userStar = userStarRepository.findByUserIdAndProjectId(userId, projectId);
+        if (userStar != null) {
+            return "{\"ok\":\"true\"}";
+        } else {
+            return "{\"ok\":\"false\"}";
+        }
+    }
+
+
+    /**
+     * 返回用户关注项目(userstar)，捐助过的项目(userproject)，发布的项目(project)
+     */
+    @PostMapping("/user/get-related-projects")
+    public String getRelatedProjects(@RequestParam("token") String tokenStr) {
+        if (tokenStr == null) {
+            return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
+        } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
+            return "{\"ok\":\"false\", \"reason\":\"您的Token已过期,请重新登录\"}";
+        }
+
+        Integer userId = tokenUtil.getUserId(tokenStr);
+        // user star
+        List<UserStar> userStarList = userStarRepository.findByUserId(userId);
+        // user project
+        List<UserProject> userProjectList = userProjectRepository.findByUserId(userId);
+        // 发布的项目 project
+        List<Project> projectList = projectRepository.findByUserId(userId);
+
+        JSONObject resultJsonObject = new JSONObject();
+        JSONArray userStarJsonArray = new JSONArray();
+        JSONArray userProjectJsonArray = new JSONArray();
+        JSONArray projectJsonArray = new JSONArray();
+
+        // user star
+        if (userStarList == null || userStarList.size() == 0) {
+            resultJsonObject.put("userStar", "null");
+        } else {
+            for (UserStar userStar : userStarList) {
+                JSONObject userStarJsonObject = new JSONObject();
+                Integer projectId = userStar.getProjectId();
+                Project project = projectRepository.findById(projectId);
+
+                userStarJsonObject.put("id", project.getId());
+                userStarJsonObject.put("href", "/project/" + project.getId());
+                userStarJsonObject.put("projectName", project.getProjectName());
+                userStarJsonObject.put("initiatorName", project.getInitiatorName());
+                userStarJsonObject.put("img", "/img/project/" + project.getImg() + ".jpg");
+                userStarJsonObject.put("description", project.getDescription());
+                userStarJsonObject.put("targetMoney", project.getTargetMoney());
+                userStarJsonObject.put("currentMoney", project.getCurrentMoney());
+                userStarJsonObject.put("detail", project.getDetail());
+                userStarJsonObject.put("imgListStr", project.getImgListStr());
+                userStarJsonObject.put("userId", project.getUserId());
+                userStarJsonObject.put("over", project.getOver());
+                userStarJsonObject.put("startTime", project.getStartDate());
+                //获取已经捐赠的人数
+                userStarJsonObject.put("peopleNumber", "" + userProjectService.getNumberByProjectId(project.getId()));
+
+                userStarJsonArray.put(userStarJsonObject);
+            }
+
+            resultJsonObject.put("userStar", userStarJsonArray);
+        }
+
+        // user project
+        if(userProjectList == null || userProjectList.size() == 0){
+            resultJsonObject.put("userProject", "null");
+        }else{
+            for(UserProject userProject:userProjectList){
+                JSONObject userProjectJsonObject = new JSONObject();
+                Integer projectId = userProject.getProjectId();
+                Project project = projectRepository.findById(projectId);
+
+                userProjectJsonObject.put("id", project.getId());
+                userProjectJsonObject.put("href", "/project/" + project.getId());
+                userProjectJsonObject.put("projectName", project.getProjectName());
+                userProjectJsonObject.put("initiatorName", project.getInitiatorName());
+                userProjectJsonObject.put("img", "/img/project/" + project.getImg() + ".jpg");
+                userProjectJsonObject.put("description", project.getDescription());
+                userProjectJsonObject.put("targetMoney", project.getTargetMoney());
+                userProjectJsonObject.put("currentMoney", project.getCurrentMoney());
+                userProjectJsonObject.put("detail", project.getDetail());
+                userProjectJsonObject.put("imgListStr", project.getImgListStr());
+                userProjectJsonObject.put("userId", project.getUserId());
+                userProjectJsonObject.put("over", project.getOver());
+                userProjectJsonObject.put("startTime", project.getStartDate());
+                //获取已经捐赠的人数
+                userProjectJsonObject.put("peopleNumber", "" + userProjectService.getNumberByProjectId(project.getId()));
+
+                userProjectJsonArray.put(userProjectJsonObject);
+            }
+
+            resultJsonObject.put("userProject", userProjectJsonArray);
+        }
+
+        // project
+        if(projectList == null || projectList.size() == 0){
+            resultJsonObject.put("projectList", "null");
+        }else{
+            for(Project project:projectList){
+                JSONObject projectJsonObject = new JSONObject();
+
+                projectJsonObject.put("id", project.getId());
+                projectJsonObject.put("href", "/project/" + project.getId());
+                projectJsonObject.put("projectName", project.getProjectName());
+                projectJsonObject.put("initiatorName", project.getInitiatorName());
+                projectJsonObject.put("img", "/img/project/" + project.getImg() + ".jpg");
+                projectJsonObject.put("description", project.getDescription());
+                projectJsonObject.put("targetMoney", project.getTargetMoney());
+                projectJsonObject.put("currentMoney", project.getCurrentMoney());
+                projectJsonObject.put("detail", project.getDetail());
+                projectJsonObject.put("imgListStr", project.getImgListStr());
+                projectJsonObject.put("userId", project.getUserId());
+                projectJsonObject.put("over", project.getOver());
+                projectJsonObject.put("startTime", project.getStartDate());
+                //获取已经捐赠的人数
+                projectJsonObject.put("peopleNumber", "" + userProjectService.getNumberByProjectId(project.getId()));
+
+                projectJsonArray.put(projectJsonObject);
+            }
+
+            resultJsonObject.put("project", projectJsonArray);
+        }
+
+        resultJsonObject.put("ok","true");
+
+        return resultJsonObject.toString();
+    }
+
+
+    /**
+     * 测试图片上传
+     *
+     * */
     /*@PostMapping("/user/pic-upload-test")
     public String picUpload(@RequestParam("name") String picName,
                             @RequestParam("pic") MultipartFile multipartFilePara){
@@ -756,9 +955,6 @@ public class UserController {
     }
 
 */
-
-
-
 
 
 }
