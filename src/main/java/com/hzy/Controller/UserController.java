@@ -20,9 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by huangzhenyang on 2017/8/4.
@@ -874,9 +872,16 @@ public class UserController {
         if(userProjectList == null || userProjectList.size() == 0){
             resultJsonObject.put("userProject", "null");
         }else{
+            List<Integer> projectIdList = new ArrayList<>();
             for(UserProject userProject:userProjectList){
                 JSONObject userProjectJsonObject = new JSONObject();
                 Integer projectId = userProject.getProjectId();
+                if(projectIdList.contains(projectId)){
+                    continue;
+                }else {
+                    projectIdList.add(projectId);
+                }
+
                 Project project = projectRepository.findById(projectId);
 
                 userProjectJsonObject.put("id", project.getId());
