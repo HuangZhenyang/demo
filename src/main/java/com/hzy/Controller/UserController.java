@@ -592,7 +592,7 @@ public class UserController {
             newPlan.setValue(0);
             newPlan.setStartDate(startDateStr);
             newPlan.setDeadline(deadlineDateStr);
-            newPlan.setLastClock(startDateStr);
+            //newPlan.setLastClock(startDateStr);
             newPlan.setStillKeeping(stillKeepingPara);
 
             planRepository.save(newPlan);
