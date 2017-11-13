@@ -494,7 +494,6 @@ public class UserController {
         try {
             deadlineDate = df.parse(plan.getDeadline());
             currDate = df.parse(df.format(new Date()));
-            lastClockDate = df.parse(plan.getLastClock());
             currDateStr = df.format(currDate);
 
             if (plan.getLastClock() == null) { // // 如果为空，说明是第一次打卡
@@ -505,6 +504,7 @@ public class UserController {
                 return "{\"ok\":\"true\", \"reason\":\"第一天打卡完成\"}";
 
             } else {
+                lastClockDate = df.parse(plan.getLastClock());
                 if (currDate.getTime() - lastClockDate.getTime() == dueTime) { // 是否与上次打卡只差了一天
                     plan.setLastClock(currDateStr);
                     plan.setFinishedTimes(plan.getFinishedTimes() + 1);
