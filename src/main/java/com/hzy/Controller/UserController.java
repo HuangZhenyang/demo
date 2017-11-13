@@ -985,6 +985,36 @@ public class UserController {
     }
 
 
+    /**
+     * 充值
+     *
+     * */
+    @PostMapping("/user/deposit")
+    public String deposit(@RequestParam("token") String tokenStr,
+                          @RequestParam("money") double moneyPara){
+        double money = moneyPara;
+        if(money <= 0){
+            return "{\"ok\":\"false\", \"reason\":\"充值的金额应该大于0\"}";
+        }
+
+        if (tokenStr == null) {
+            return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
+        } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
+            return "{\"ok\":\"false\", \"reason\":\"您的Token已过期,请重新登录\"}";
+        }
+
+        Integer userId = tokenUtil.getUserId(tokenStr);
+        User user = userRepository.findById(userId);
+        double currBalance = user.getBalance();
+        double newBalance = currBalance + money;
+
+        user.setBalance(newBalance);
+        userRepository.save(user);
+
+        return "{\"ok\":\"true\"}";
+
+    }
+
 
     /**
      * 测试图片上传
