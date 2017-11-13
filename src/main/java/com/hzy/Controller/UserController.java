@@ -937,6 +937,51 @@ public class UserController {
 
 
     /**
+     * 获取单个项目信息
+     *
+     * */
+    @PostMapping("/user/get-project")
+    public String getProject(@RequestParam("token") String tokenStr,
+                             @RequestParam("projectId") Integer projectIdPara){
+        if (tokenStr == null) {
+            return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
+        } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
+            return "{\"ok\":\"false\", \"reason\":\"您的Token已过期,请重新登录\"}";
+        }
+
+        Integer projectId = projectIdPara;
+        Project project = projectRepository.findById(projectId);
+        if(project == null){
+            return "{\"ok\":\"false\",\"reason\":\"该项目不存在\"}";
+        }else{
+            JSONObject resultJsonObject = new JSONObject();
+            JSONObject projectJsonObject = new JSONObject();
+
+            projectJsonObject.put("id", project.getId());
+            projectJsonObject.put("href", "/project/" + project.getId());
+            projectJsonObject.put("projectName", project.getProjectName());
+            projectJsonObject.put("initiatorName", project.getInitiatorName());
+            projectJsonObject.put("img", "/img/project/" + project.getImg() + ".jpg");
+            projectJsonObject.put("description", project.getDescription());
+            projectJsonObject.put("targetMoney", project.getTargetMoney());
+            projectJsonObject.put("currentMoney", project.getCurrentMoney());
+            projectJsonObject.put("detail", project.getDetail());
+            projectJsonObject.put("imgListStr", project.getImgListStr());
+            projectJsonObject.put("userId", project.getUserId());
+            projectJsonObject.put("over", project.getOver());
+            projectJsonObject.put("startTime", project.getStartDate());
+            //获取已经捐赠的人数
+            projectJsonObject.put("peopleNumber", "" + userProjectService.getNumberByProjectId(project.getId()));
+
+            resultJsonObject.put("ok","true");
+            resultJsonObject.put("project", projectJsonObject);
+            return resultJsonObject.toString();
+        }
+    }
+
+
+
+    /**
      * 测试图片上传
      *
      * */
