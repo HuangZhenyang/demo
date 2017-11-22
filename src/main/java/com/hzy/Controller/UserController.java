@@ -280,21 +280,19 @@ public class UserController {
         if (!multipartFile.isEmpty()) {
             // 获取project目录下最新的id是多少,得到新图片的id
             //C:\project\demo\src\main\resources\static\img\project
-            String directoryPath = "C:\\project\\demo\\src\\main\\resources\\static\\img\\project\\";
-            List<String> fileNameList = FileUtil.getFileNameList(directoryPath);  // 取出的文件是按顺序排列的, 数字小到大，然后是字母a-z,当然，这里只有数字
-            String lastFileName;
-            if (fileNameList == null) {
+            String directoryPath = "C:\\Users\\Administrator\\Desktop\\demo-master\\src\\main\\resources\\static\\img\\project\\";
+            List<Integer> fileIndexList = FileUtil.getFileNameList(directoryPath);  // 取出的文件是按顺序排列的, 数字小到大，然后是字母a-z,当然，这里只有数字
+            Integer lastFileIndex;
+            if (fileIndexList == null) {
                 fileNumber = 1;
             } else {
-                lastFileName = fileNameList.get(fileNameList.size() - 1); // 获取最后一个
-                String[] lastFileNameStr = lastFileName.split("\\.");
-                int lastFileNumber = Integer.parseInt(lastFileNameStr[0]);
-                fileNumber = lastFileNumber + 1;
+                lastFileIndex = fileIndexList.get(fileIndexList.size() - 1); // 获取最后一个
+                fileNumber = lastFileIndex + 1;
             }
 
             // 存储图片
             try {
-                String filePath = "C:\\project\\demo\\src\\main\\resources\\static\\img\\project\\";
+                String filePath = "C:\\Users\\Administrator\\Desktop\\demo-master\\src\\main\\resources\\static\\img\\project\\";
                 BufferedOutputStream out = new BufferedOutputStream(
                         new FileOutputStream(new File(filePath + fileNumber + ".jpg")));//保存图片到目录下
                 out.write(multipartFile.getBytes());
