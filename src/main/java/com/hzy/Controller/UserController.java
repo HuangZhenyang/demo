@@ -174,9 +174,13 @@ public class UserController {
         resultJsonObject.put("news", newsJsonArray);
 
         //取出projects  分页
-        Page<Project> projectPage = projectService.getProjectPage("DESC", "id", 0, 5);
-        List<Project> projectList = projectPage.getContent();
+        //Page<Project> projectPage = projectService.getProjectPage("DESC", "id", 0, 10);
+        //List<Project> projectList = projectPage.getContent();
+        List<Project> projectList = projectRepository.findAll();
         for (Project project : projectList) {
+            if( project.getUserId().equals( tokenUtil.getUserId( tokenStr))){
+                continue;
+            }
             JSONObject projectsJsonObject = new JSONObject();  // 在for循环里初始化，才不会出bug
 
             projectsJsonObject.put("id", project.getId());
@@ -1011,6 +1015,52 @@ public class UserController {
 
         return "{\"ok\":\"true\"}";
 
+    }
+
+
+    /**
+     * 返回发布的项目
+     *
+     * */
+    @PostMapping("/get-published-projects")
+    public String getPublishedProjects(@RequestParam("token") String tokenStr){
+        if (tokenStr == null) {
+            return "{\"ok\":\"false\",\"reason\":\"您还未登录\"}";
+        } else if (!tokenUtil.checkToken(tokenStr)) {  // 返回false表示已经过期
+            return "{\"ok\":\"false\", \"reason\":\"您的Token已过期,请重新登录\"}";
+        }
+        Integer userId = tokenUtil.getUserId(tokenStr);
+        List<Project> projectList= projectRepository.findByUserId(userId);
+        if(projectList == null){
+            return "{\"ok\":\"false\", \"reason\":\"您还没有发布过任何项目\"}";
+        }
+        JSONObject resultJsonObject = new JSONObject();
+        JSONArray projectsJsonArray = new JSONArray();
+        for(Project project: projectList){
+            JSONObject projectsJsonObject = new JSONObject();
+
+            projectsJsonObject.put("id", project.getId());
+            projectsJsonObject.put("href", "/project/" + project.getId());
+            projectsJsonObject.put("projectName", project.getProjectName());
+            projectsJsonObject.put("initiatorName", project.getInitiatorName());
+            projectsJsonObject.put("img", "/img/project/" + project.getImg() + ".jpg");
+            projectsJsonObject.put("description", project.getDescription());
+            projectsJsonObject.put("targetMoney", project.getTargetMoney());
+            projectsJsonObject.put("currentMoney", project.getCurrentMoney());
+            projectsJsonObject.put("detail", project.getDetail());
+            projectsJsonObject.put("imgListStr", project.getImgListStr());
+            projectsJsonObject.put("userId", project.getUserId());
+            projectsJsonObject.put("over", project.getOver());
+            projectsJsonObject.put("startTime", project.getStartDate());
+            //获取已经捐赠的人数
+            projectsJsonObject.put("peopleNumber", "" + userProjectService.getNumberByProjectId(project.getId()));
+
+            projectsJsonArray.put(projectsJsonObject);
+        }
+        resultJsonObject.put("projects", projectsJsonArray);
+        resultJsonObject.put("ok","true");
+
+        return resultJsonObject.toString();
     }
 
 

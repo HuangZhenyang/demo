@@ -16,4 +16,7 @@ public interface ProjectRepository extends PagingAndSortingRepository<Project,In
     Project findById(Integer id);
 
     List<Project> findByUserId(Integer userId);
+
+    @Query("select p from Project p")
+    List<Project> findAll();
 }
